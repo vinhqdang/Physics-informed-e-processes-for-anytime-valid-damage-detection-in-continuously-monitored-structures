@@ -169,7 +169,7 @@ Three gaps motivate this work. First, SHM decision rules are evaluated at fixed 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{fig_pipeline.png}
-\caption{The PHASE monitor. Quantities in the upper row are computed once, before installation, from the digital twin: the modal sensitivities, the damage cone and the nuisance subspace, and the design constants $\mu_0$ and the detectability map. The lower row runs at every interrogation epoch for the life of the installation. The feedback path is the identifiability-aware adaptation of Section~3.8, which allows the nuisance model to track drift while withholding residual components consistent with identifiable damage.}
+\caption{The PHASE monitor. Quantities in the upper row are computed once, before installation, from the digital twin: the modal sensitivities, the damage cone and the nuisance subspace, and the design constants $\mu_0$ and the detectability map. The lower row runs at every interrogation epoch for the life of the installation. The feedback path is the identifiability-aware adaptation of Section~\ref{sec:adapt}, which allows the nuisance model to track drift while withholding residual components consistent with identifiable damage.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -346,7 +346,19 @@ The bound has the expected shape: delay grows logarithmically in $1/\alpha$ and 
 \end{revblock}
 Restricting the alternative to the cone raises $g(\lambda)$ by removing the noise that an omnibus statistic must accumulate over all directions, which is why the cone ablation in Section~4 loses so much power.
 
-\subsection{Identifiability-aware adaptation}
+\begin{revblock}
+\subsection{Restarts: protecting against evidence lost in long healthy periods}\label{sec:restart}
+
+The penalty $(L^\lambda_{t^\star})^-$ in \eqref{eq:delay} has a practical consequence. During a long healthy period the evidence process drifts downwards: the allowance $\hat\delta$ is subtracted at every epoch, and the logarithm of a bet has a negative drift (Jensen) even when the conditional mean excess is zero. The components with large bets, which are the ones that detect damage quickly, lose the most. A change that starts late is then detected slowly, however large it is. The remedy is to hedge over the start time of the evidence process as well as over the size of the bet.
+
+\begin{proposition}[Start-time mixture]\label{prop:restart}
+Let $s_0<s_1<\dots$ be fixed start times with $s_0=t_0$ and let $\pi_k\ge0$ with $\sum_k\pi_k\le1$. Let $\widetilde W^{(k)}_t=1$ for $t\le s_k$ and, for $t>s_k$, let $\widetilde W^{(k)}_t$ be the mixture over $\Lambda$ of $\prod_{s_k<u\le t}(1+\lambda(X_u-\mu_0))/(1+\lambda\hat\delta)$. Under the conditions of Proposition~\ref{prop:delta}(i), $W^R_t=\sum_k\pi_k\widetilde W^{(k)}_t$ is a non-negative supermartingale with initial value $\sum_k\pi_k\le1$, so $\Prob(\exists t:W^R_t\ge1/\alpha)\le\alpha$. If the change occurs at $t^\star$ and $k^\star=\max\{k:s_k\le t^\star\}$, the bound \eqref{eq:delay} holds for the alarm time of $W^R$ with $b$ replaced by $b+\log(1/\pi_{k^\star})$ and $L^\lambda_{t^\star}$ replaced by the log-wealth of the component started at $s_{k^\star}$ and observed up to $t^\star$.
+\end{proposition}
+
+PHASE-R, evaluated below, starts a new evidence process every 90 days (360 epochs) with weights $\pi_k=1/((k+1)(k+2))$, which sum to one. The price is the extra $\log(1/\pi_k)\approx2\log(k+2)$ nats in the numerator of \eqref{eq:delay}, which grows slowly with the age of the installation; the gain is that the deficit term is bounded by what accumulates in at most 90 days. The construction is in the spirit of change-point maximisation in e-detectors \citep{shin2023edetectors} but keeps the time-uniform probability bound, because the components are averaged and not maximised. Like Proposition~\ref{prop:valid}, validity is conditional on the bound on the conditional mean excess, and the same representativeness caveat applies.
+\end{revblock}
+
+\subsection{Identifiability-aware adaptation}\label{sec:adapt}
 
 Online adaptation of a nuisance model in a damage detector is dangerous: with forgetting factor $\nu$, the surrogate absorbs a persistent step within roughly $1/(1-\nu)$ epochs, and a detector whose reference model chases the damage will eventually go quiet. Freezing the surrogate after commissioning avoids this but forfeits tracking of genuine long-term drift, and in preliminary experiments a naive evidence-gated freeze produced a positive feedback loop in which a frozen surrogate generated ever-larger residuals.
 
@@ -922,6 +934,9 @@ Write $Z_s=\log(1+\lambda(X_s-\mu_0))-\log(1+\lambda\hat\delta)$, so that $L^\la
 \E\Big[\sum_{s=t^\star+1}^{T_n}Z_s\,\Big|\,\F_{t^\star}\Big]=\E\Big[\sum_{s=t^\star+1}^{T_n}e_s\,\Big|\,\F_{t^\star}\Big]\ \ge\ \gamma_\lambda\,\E[T_n-t^\star\mid\F_{t^\star}].
 \]
 Before $T$ the log-wealth is below $b$, and at $T$ it exceeds $b$ by at most $B_\lambda$, so $L^\lambda_{T_n}\le b+B_\lambda$ and $\sum_{s=t^\star+1}^{T_n}Z_s=L^\lambda_{T_n}-L^\lambda_{t^\star}\le b+B_\lambda+(L^\lambda_{t^\star})^-$. Combining, $\gamma_\lambda\E[T_n-t^\star\mid\F_{t^\star}]\le b+B_\lambda+(L^\lambda_{t^\star})^-$; letting $n\to\infty$ (monotone convergence) bounds $\E[T-t^\star\mid\F_{t^\star}]$, and $(\tau-t^\star)^+\le T-t^\star$ gives \eqref{eq:delay}. The condition $\gamma_\lambda>0$ is exactly the requirement that the damage generate evidence faster than the allowance consumes it. \hfill$\square$
+
+\paragraph{Proposition~\ref{prop:restart}.}
+For $t\le s_k$ the component $\widetilde W^{(k)}$ is constant at one, and for $t>s_k$ it is, by the argument of Proposition~\ref{prop:delta}(i) applied from $s_k$ with the conditioning $\F_{s_k}$, a non-negative supermartingale. A sum with weights $\pi_k$ of non-negative supermartingales (monotone convergence for infinitely many terms) is a non-negative supermartingale, with initial value $\sum_k\pi_k\le1$, and Ville's inequality gives $\Prob(\exists t:W^R_t\ge1/\alpha)\le\alpha\sum_k\pi_k\le\alpha$. For the delay, $W^R_t\ge\pi_{k^\star}\widetilde W^{(k^\star)}_t$, so an alarm occurs no later than the first time the log-wealth of component $k^\star$, mixed over $\Lambda$, reaches $\log(1/\alpha)+\log(1/\pi_{k^\star})$, and the proof of Proposition~\ref{prop:delay} applies with $b$ replaced by $b+\log(1/\pi_{k^\star})$. \hfill$\square$
 \end{revblock}
 
 \end{document}

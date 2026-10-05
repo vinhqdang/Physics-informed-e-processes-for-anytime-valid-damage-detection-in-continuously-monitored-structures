@@ -19,8 +19,8 @@ LBL = {'phase_d': 'PHASE', 'phase_e': 'PHASE-E', 'phase': 'PHASE-ND',
        'cusum': 'CUSUM (oracle)', 'hotelling': 'repeated $T^2$',
        'pca': 'PCA-EOV chart', 'msd': 'Mahalanobis index', 'ewma': 'EWMA (oracle)',
        'sr': 'Shiryaev--Roberts', 'ctm': 'conformal martingale',
-       'ctm_f': 'conformal (full calib.)'}
-ORDER = ['phase_d', 'phase_c', 'phase', 'phase_omni', 'phase_bb', 'phase_e', 'ctm', 'ctm_f',
+       'ctm_f': 'conformal (full calib.)', 'phase_r': 'PHASE-R'}
+ORDER = ['phase_d', 'phase_r', 'phase_c', 'phase', 'phase_omni', 'phase_bb', 'phase_e', 'ctm', 'ctm_f',
          'cusum', 'sr', 'ewma', 'chart_cal', 'msd', 'pca', 'chart3', 'hotelling']
 
 

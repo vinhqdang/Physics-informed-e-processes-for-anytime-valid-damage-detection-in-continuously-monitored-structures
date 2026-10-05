@@ -9,7 +9,7 @@ T_LATE = 4745            # late onset: year 3.25 of a four-year record
 R_CAL, R_H, R_D, R_SW, R_LONG = 150, 300, 150, 100, 100
 METHODS = ['phase_d', 'phase_e', 'phase', 'phase_omni', 'phase_bb',
            'chart3', 'chart_cal', 'cusum', 'hotelling',
-           'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f']
+           'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f', 'phase_r']
 EXTRA = ['pca', 'msd', 'ewma', 'sr']
 SCEN = ['storey3_2', 'storey3_5', 'storey3_10', 'gradual_6',
         'storey1_5', 'storey6_5', 'stiffening']

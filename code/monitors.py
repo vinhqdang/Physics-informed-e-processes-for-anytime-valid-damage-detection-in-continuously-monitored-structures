@@ -159,6 +159,9 @@ def _robust_scale(res):
 
 # ------------------------------------------------------------------------- monitor
 EPS_CAL = ALPHA / 2.0            # calibration-failure budget of PHASE-C
+RESTART_EVERY = 360              # PHASE-R: a new evidence process may start every 90 days
+N_RESTART = 14                   # number of start times (weights 1/((k+1)(k+2)), sum < 1)
+PI_R = 1.0 / ((np.arange(N_RESTART) + 1.0) * (np.arange(N_RESTART) + 2.0))
 
 
 def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
@@ -214,6 +217,9 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
     lwo = np.zeros(N_LAM); lwb = np.zeros(N_LAM); lwc = np.zeros(N_LAM)
     n_in = 0
     disc_c = np.log1p(LAMS * delta_c)
+    # PHASE-R: mixture over start times of the discounted evidence process, so that
+    # evidence lost during a long healthy period cannot delay a late change
+    lwr = np.zeros((N_RESTART, N_LAM))
     xs_mon = []
     gacc = np.zeros(N_LAM); gn = 0
     onset_state = None
@@ -225,7 +231,7 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
     loc = np.zeros(M.N_STOREY)
     keys = ('phase_d', 'phase_e', 'phase', 'phase_omni', 'phase_bb',
             'chart3', 'chart_cal', 'cusum', 'hotelling',
-            'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f')
+            'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f', 'phase_r')
     alarms = {k: -1 for k in keys}
     stat_max = {'chart': 0.0, 'cusum': 0.0, 'pca': 0.0, 'msd': 0.0,
                 'ewma': 0.0, 'sr': 0.0}
@@ -296,6 +302,14 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
                 gacc += np.log1p(LAMS * (x - MU0)); gn += 1
         xs_mon.append(x)
         Lpc = mix(lwc)
+        kk = (t - t_burn) // RESTART_EVERY
+        inc = np.log1p(LAMS * (x - MU0)) - disc
+        started = min(kk + 1, N_RESTART)
+        lwr[:started] += inc
+        mx = lwr[:started].max(axis=1, keepdims=True)
+        comp = (mx[:, 0] + np.log(np.exp(lwr[:started] - mx).mean(axis=1)))
+        W_r = (PI_R[:started] * np.exp(comp)).sum() + PI_R[started:].sum()
+        L_r = np.log(W_r)
         Lp, Lpd, Lpo, Lpb, Lpe = mix(lw), mix(lwd), mix(lwo), mix(lwb), mix(lwe)
 
         cus = max(0.0, cus + (x - MU0) - cusum_k)
@@ -329,6 +343,7 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         if alarms['phase_d'] < 0 and Lpd >= logthr:
             alarms['phase_d'] = t
             loc_at_alarm = int(np.argmax(loc))
+        if alarms['phase_r'] < 0 and L_r >= logthr: alarms['phase_r'] = t
         if alarms['phase_c'] < 0 and Lpc >= np.log(1.0 / (alpha - EPS_CAL)):
             alarms['phase_c'] = t
         if alarms['phase_e'] < 0 and Lpe >= logthr: alarms['phase_e'] = t
