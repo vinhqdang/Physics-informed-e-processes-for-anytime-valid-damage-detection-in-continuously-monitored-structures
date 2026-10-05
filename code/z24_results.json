@@ -1,0 +1,301 @@
+{
+ "R1a": {
+  "phase": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 10.0
+  },
+  "phase_omni": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 15.0
+  },
+  "chart3": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 0.0
+  },
+  "chi2": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 0.0
+  },
+  "cusum": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 1.0
+  },
+  "_bounds": [
+   [
+    2,
+    63
+   ]
+  ],
+  "_stage": {
+   "phase": {
+    "2": 1.0
+   },
+   "phase_omni": {
+    "2": 1.0
+   },
+   "chart3": {
+    "2": 1.0
+   },
+   "chi2": {
+    "2": 1.0
+   },
+   "cusum": {
+    "2": 1.0
+   }
+  },
+  "_delta": [
+   0.13369736134622812,
+   0.17470866895707263
+  ],
+  "_reps": 200
+ },
+ "R1b": {
+  "phase": {
+   "rate": 0.0,
+   "se": 0.0,
+   "median_epoch": null
+  },
+  "phase_omni": {
+   "rate": 0.0,
+   "se": 0.0,
+   "median_epoch": null
+  },
+  "chart3": {
+   "rate": 0.065,
+   "se": 0.017432010784760317,
+   "median_epoch": 24.0
+  },
+  "chi2": {
+   "rate": 0.135,
+   "se": 0.02416350554038052,
+   "median_epoch": 24.0
+  },
+  "cusum": {
+   "rate": 0.86,
+   "se": 0.024535688292770592,
+   "median_epoch": 15.5
+  },
+  "_bounds": [
+   [
+    102,
+    42
+   ]
+  ],
+  "_stage": {
+   "phase": {
+    "none": 1.0
+   },
+   "phase_omni": {
+    "none": 1.0
+   },
+   "chart3": {
+    "none": 0.935,
+    "102": 0.065
+   },
+   "chi2": {
+    "none": 0.865,
+    "102": 0.135
+   },
+   "cusum": {
+    "none": 0.14,
+    "102": 0.86
+   }
+  },
+  "_delta": [
+   0.07407290640795282,
+   0.03794077270694891
+  ],
+  "_reps": 200
+ },
+ "R2": {
+  "phase": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 72.0
+  },
+  "phase_omni": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 119.0
+  },
+  "chart3": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 78.0
+  },
+  "chi2": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 74.5
+  },
+  "cusum": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 11.5
+  },
+  "_bounds": [
+   [
+    3,
+    71
+   ],
+   [
+    4,
+    143
+   ],
+   [
+    5,
+    215
+   ],
+   [
+    6,
+    287
+   ]
+  ],
+  "_stage": {
+   "phase": {
+    "3": 0.435,
+    "4": 0.565
+   },
+   "phase_omni": {
+    "4": 0.875,
+    "5": 0.125
+   },
+   "chart3": {
+    "3": 0.295,
+    "4": 0.705
+   },
+   "chi2": {
+    "3": 0.125,
+    "4": 0.875
+   },
+   "cusum": {
+    "3": 1.0
+   }
+  },
+  "_delta": [
+   0.056853303452669035,
+   0.019790920230412064
+  ],
+  "_reps": 200
+ },
+ "R3": {
+  "phase": {
+   "rate": 0.0,
+   "se": 0.0,
+   "median_epoch": null
+  },
+  "phase_omni": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 14.0
+  },
+  "chart3": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 0.0
+  },
+  "chi2": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 0.0
+  },
+  "cusum": {
+   "rate": 0.0,
+   "se": 0.0,
+   "median_epoch": null
+  },
+  "_bounds": [
+   [
+    8,
+    72
+   ]
+  ],
+  "_stage": {
+   "phase": {
+    "none": 1.0
+   },
+   "phase_omni": {
+    "8": 1.0
+   },
+   "chart3": {
+    "8": 1.0
+   },
+   "chi2": {
+    "8": 1.0
+   },
+   "cusum": {
+    "none": 1.0
+   }
+  },
+  "_delta": [
+   0.168211543082074,
+   0.1751042372207039
+  ],
+  "_reps": 200
+ },
+ "R4": {
+  "phase": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 11.0
+  },
+  "phase_omni": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 25.0
+  },
+  "chart3": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 8.0
+  },
+  "chi2": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 7.0
+  },
+  "cusum": {
+   "rate": 1.0,
+   "se": 0.0,
+   "median_epoch": 2.0
+  },
+  "_bounds": [
+   [
+    9,
+    72
+   ],
+   [
+    10,
+    144
+   ]
+  ],
+  "_stage": {
+   "phase": {
+    "9": 1.0
+   },
+   "phase_omni": {
+    "10": 0.005,
+    "9": 0.995
+   },
+   "chart3": {
+    "9": 1.0
+   },
+   "chi2": {
+    "9": 1.0
+   },
+   "cusum": {
+    "9": 1.0
+   }
+  },
+  "_delta": [
+   0.0501353694830095,
+   0.021518017319768757
+  ],
+  "_reps": 200
+ }
+}
