@@ -8,7 +8,7 @@ import numpy as np
 
 S = json.load(open('summary.json'))
 os.makedirs('tables', exist_ok=True)
-NAME = {'phase_d': 'PHASE', 'phase_c': 'PHASE-C', 'phase_e': 'PHASE-E',
+NAME = {'phase_d': 'PHASE', 'phase_c': 'PHASE-C', 'phase_r': 'PHASE-R', 'phase_e': 'PHASE-E',
         'phase_omni': 'PHASE-$\\Omega$', 'phase_bb': 'PHASE-BB', 'phase': 'PHASE-ND',
         'ctm': 'CTM', 'ctm_f': 'CTM-F', 'cusum': 'CUSUM', 'sr': 'Shiryaev--Roberts',
         'ewma': 'EWMA', 'chart_cal': 'Calibrated chart (oracle)',
@@ -26,7 +26,7 @@ def cell_rate(d):
 
 def fwer_table():
     groups = [('anytime-valid by construction (conditionally)',
-               ['phase_d', 'phase_c', 'phase_e', 'phase_omni', 'phase_bb', 'phase',
+               ['phase_d', 'phase_c', 'phase_r', 'phase_e', 'phase_omni', 'phase_bb', 'phase',
                 'ctm', 'ctm_f']),
               ('sequential detection, horizon-calibrated oracles', ['cusum', 'sr', 'ewma']),
               ('current SHM practice', ['chart_cal', 'msd', 'pca', 'chart3', 'hotelling'])]
@@ -52,14 +52,14 @@ def delay_detail():
             '%.0f' % (p['med'] / 4), '%.0f' % (p['q25'] / 4), '%.0f' % (p['q75'] / 4),
             p['n_pre'], p['n_undet'], loc))
     r = S['scenarios']['stiffening']; p = r['phase_d']
-    L.append('Benign 3\\% stiffening & %d/%d & %s [%s, %s] & --- & %d & %d & --- \\\\' % (
+    L.append('Benign 3\\%% stiffening & %d/%d & %s [%s, %s] & --- & %d & %d & --- \\\\' % (
         p['n_det'], p['n'], f3(p['det_rate'])[:4], f3(p['det_lo'])[:4], f3(p['det_hi'])[:4],
         p['n_pre'], p['n_undet']))
     return '\n'.join(L)
 
 
 def delay_compare():
-    ms = ['phase_d', 'phase_c', 'phase_omni', 'phase_bb', 'ctm', 'ctm_f', 'cusum']
+    ms = ['phase_d', 'phase_r', 'phase_c', 'phase_omni', 'phase_bb', 'ctm', 'ctm_f', 'cusum']
     L = []
     for sc, lab in [('storey3_2', '2\\% storey 3'), ('storey3_5', '5\\% storey 3'),
                     ('storey3_10', '10\\% storey 3'), ('gradual_6', 'Gradual 6\\%'),
@@ -97,7 +97,7 @@ def late_table():
     for sc, lab in [('storey3_5', '5\\% storey 3'), ('storey3_2', '2\\% storey 3'),
                     ('storey3_10', '10\\% storey 3'), ('stiffening', 'Benign stiffening')]:
         r = S['late'][sc]
-        for m in ('phase_d', 'phase_c'):
+        for m in ('phase_d', 'phase_r', 'phase_c'):
             p = r[m]
             med = '---' if p['med'] is None else '%.0f (%.0f--%.0f)' % (p['med'] / 4, p['q25'] / 4, p['q75'] / 4)
             L.append('%s & %s & %d/%d [%s, %s] & %s & %d \\\\' % (
@@ -110,15 +110,38 @@ def nuisance_table():
     I = json.load(open('identifiability.json'))
     L = []
     for nm, v in I['nuisance_cases'].items():
+        if 'roof' in nm:
+            continue
+        nm = nm.replace('+ support (storey-1) condition', '+ support condition (or roof mass)')
         L.append('%s & %d & %d & %s & %.3f \\\\' % (
             nm, v['dim'], v['modes_left'], ' & '.join('%.2f' % x for x in v['retention']),
             min(v['retention'])))
     return '\n'.join(L)
 
 
+def z24_table():
+    d = json.load(open('z24_sensitivity.json'))
+    pool = json.load(open('z24_pool.json'))['runs']
+    runs = dict(d['runs']); runs.update(pool)
+    L = []
+    for mod, mlab in (('avt', 'ambient'), ('fvt', 'forced')):
+        L.append('\\multicolumn{5}{l}{\\textit{%s vibration}}\\\\' % mlab)
+        for e in ('R1a', 'R2', 'R3', 'R4', 'R5'):
+            cells = []
+            for o in ('perm', 'poolblock', 'chron', 'rot'):
+                r = runs['%s_%s_%s' % (mod, e, o)]
+                def c(k):
+                    rate, med = r[k]
+                    return '%.2f' % rate + ('' if med is None else ' (%d)' % med)
+                cells.append('%s / %s' % (c('phase'), c('phase_omni')))
+            L.append('%s & %s \\\\' % (e, ' & '.join(cells)))
+    return '\n'.join(L)
+
+
 if __name__ == '__main__':
     out = dict(fwer=fwer_table(), delay_detail=delay_detail(), delay_compare=delay_compare(),
-               burn=burn_table(), late=late_table(), nuisance=nuisance_table())
+               burn=burn_table(), late=late_table(), nuisance=nuisance_table(),
+               z24=z24_table() if os.path.exists('z24_pool.json') else '')
     for k, v in out.items():
         open('tables/%s.tex' % k, 'w').write(v + '\n')
         print('=== ', k); print(v)

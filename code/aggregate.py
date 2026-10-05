@@ -311,7 +311,7 @@ fig.tight_layout(); fig.savefig('fig_detectability.png'); plt.close(fig)
 fig, ax = plt.subplots(1, 2, figsize=(7.2, 2.7))
 tbs = sorted(burn)
 dd = [res['commissioning'][t]['days'] for t in tbs]
-for m, mk in [('phase_d', 'o-'), ('phase_e', 's--'), ('phase_bb', '^-.'),
+for m, mk in [('phase_d', 'o-'), ('phase_c', 'v-'), ('phase_e', 's--'), ('phase_bb', '^-.'),
               ('ctm', 'd:')]:
     ax[0].plot(dd, [res['commissioning'][t][m]['fwer'] for t in tbs], mk, ms=4, lw=1,
                label=LBL[m])
@@ -322,8 +322,10 @@ ax[0].set_xlabel('commissioning window (days)')
 ax[0].set_ylabel('false-alarm probability'); ax[0].legend(fontsize=7)
 ax[1].set_xlabel('commissioning window (days)')
 ax[1].set_ylabel('detection rate, 5% loss')
-ax[0].set_xticks(dd); ax[0].set_xticklabels([int(x) for x in dd])
-ax[1].set_xticks(dd); ax[1].set_xticklabels([int(x) for x in dd])
+from matplotlib.ticker import NullFormatter
+for a_ in ax:
+    a_.set_xticks([30, 60, 120, 240, 365]); a_.set_xticklabels([30, 60, 120, 240, 365])
+    a_.xaxis.set_minor_formatter(NullFormatter())
 fig.tight_layout(); fig.savefig('fig_commissioning.png'); plt.close(fig)
 
 print(json.dumps({k: res[k] for k in ['fwer_pooled', 'delta_calib', 'delta_c_mean',
