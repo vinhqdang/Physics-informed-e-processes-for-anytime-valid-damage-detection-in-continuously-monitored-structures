@@ -5,10 +5,11 @@ import model as M
 import monitors as MO
 
 T_REC, T_STAR, T_LONG = 2920, 1825, 5840
+T_LATE = 4745            # late onset: year 3.25 of a four-year record
 R_CAL, R_H, R_D, R_SW, R_LONG = 150, 300, 150, 100, 100
 METHODS = ['phase_d', 'phase_e', 'phase', 'phase_omni', 'phase_bb',
            'chart3', 'chart_cal', 'cusum', 'hotelling',
-           'pca', 'msd', 'ewma', 'sr', 'ctm']
+           'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f']
 EXTRA = ['pca', 'msd', 'ewma', 'sr']
 SCEN = ['storey3_2', 'storey3_5', 'storey3_10', 'gradual_6',
         'storey1_5', 'storey6_5', 'stiffening']
@@ -24,15 +25,20 @@ def load(name):
         return json.load(f)
 
 
-def sweep(scenario, reps, seed0, T=T_REC, t_burn=MO.T_BURN, h=None, hx=None):
+def sweep(scenario, reps, seed0, T=T_REC, t_burn=MO.T_BURN, h=None, hx=None,
+          t_star=T_STAR):
     rows = {m: [] for m in METHODS}
     loc, dlt, cov, smax = [], [], [], []
+    diag = []
     for r in range(reps):
         rng = np.random.default_rng(seed0 + r)
-        rec = M.simulate(rng, T, scenario, t_star=T_STAR)
-        o = MO.run_record(rec, t_burn=t_burn, h_extra=hx,
+        rec = M.simulate(rng, T, scenario, t_star=t_star)
+        o = MO.run_record(rec, t_burn=t_burn, h_extra=hx, t_onset=t_star,
                           h_chart=None if h is None else h[0],
                           h_cusum=None if h is None else h[1])
+        diag.append({k: o[k] for k in ('delta_c', 'loc_at_alarm', 'x_burn_mean',
+                                       'x_mon_mean', 'excess_blockmax', 'acf1',
+                                       'onset')})
         for m in METHODS:
             rows[m].append(o['alarms'][m])
         loc.append(o['loc']); cov.append(o['coverage'])
@@ -41,7 +47,7 @@ def sweep(scenario, reps, seed0, T=T_REC, t_burn=MO.T_BURN, h=None, hx=None):
                      ['chart', 'cusum'] + EXTRA])
     return dict(alarms={m: rows[m] for m in METHODS}, loc=loc, delta=dlt,
                 coverage=cov, stat_max=smax, reps=reps, T=T, t_burn=t_burn,
-                scenario=scenario)
+                scenario=scenario, t_star=t_star, diag=diag)
 
 
 def main(stage):
@@ -121,6 +127,40 @@ def main(stage):
         print('tb=%d FA phase_d=%.3f phase_bb=%.3f cov=%.2f'
               % (tb, (ah >= 0).mean(), (ab >= 0).mean(),
                  np.mean(d['healthy']['coverage'])))
+    elif stage == 'late':
+        c = load('calib')
+        out = {}
+        for k, sc in enumerate(['storey3_5', 'storey3_2', 'storey3_10', 'stiffening']):
+            out[sc] = sweep(sc, R_LONG, 700000 + 1000 * k, T=T_LONG, t_star=T_LATE,
+                            h=(c['h_chart'], c['h_cusum']), hx=c['h_extra'])
+            a = np.array(out[sc]['alarms']['phase_d'])
+            det = a >= T_LATE
+            print('%s late onset det=%.3f delay_med=%s pre=%.3f' % (
+                sc, det.mean(), np.median(a[det] - T_LATE) if det.any() else None,
+                ((a >= 0) & (a < T_LATE)).mean()))
+        save('late', out)
+    elif stage == 'rate3s':
+        # spurious-trigger rate of the 3-sigma chart under an inspect-and-resume rule
+        out = dict(lockouts=[1, 4, 28], reps=60, rows=[])
+        for r in range(out['reps']):
+            rng = np.random.default_rng(800000 + r)
+            rec = M.simulate(rng, T_REC, 'healthy', t_star=T_STAR)
+            o = MO.run_record(rec, collect_paths=True)
+            ch = np.abs(np.array(o['paths']['r'])).max(axis=1) > 3.0
+            row = dict(exceed=float(ch.mean()))
+            for lk in out['lockouts']:
+                n, t = 0, 0
+                while t < len(ch):
+                    if ch[t]:
+                        n += 1; t += lk
+                    else:
+                        t += 1
+                row['n_lock%d' % lk] = n
+            row['years'] = len(ch) / (4 * 365)
+            out['rows'].append(row)
+        save('rate3s', out)
+        print({k: float(np.mean([r[k] for r in out['rows']]))
+               for k in out['rows'][0]})
     elif stage == 'paths':
         out = {}
         for sc in ['healthy', 'storey3_5', 'stiffening']:

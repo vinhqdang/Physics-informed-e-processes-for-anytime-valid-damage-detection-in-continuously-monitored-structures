@@ -1,9 +1,9 @@
-# PHASE submission package
+# PHASE manuscript package (revision)
 
 Manuscript: "Physics-informed e-processes for anytime-valid damage detection in
-continuously monitored structures", for Artificial Intelligence for a
+continuously monitored structures", submitted to Artificial Intelligence for a
 Sustainable Built Environment (special issue: Physics-Informed AI for
-Infrastructure Resilience).
+Infrastructure Resilience). This folder holds the revised version.
 
 ## Layout
 

@@ -158,8 +158,11 @@ def _robust_scale(res):
 
 
 # ------------------------------------------------------------------------- monitor
+EPS_CAL = ALPHA / 2.0            # calibration-failure budget of PHASE-C
+
+
 def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
-               collect_paths=False, t_burn=T_BURN, h_extra=None):
+               collect_paths=False, t_burn=T_BURN, h_extra=None, t_onset=None):
     y, dT, q = rec['y'], rec['dT'], rec['q']
     T = len(y)
     pi, bb = PooledPI(), PerModeBB()
@@ -195,14 +198,26 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         return max(0.0, x.mean() - m0 + 2.0 * x.std(ddof=1) / np.sqrt(len(x)))
 
     delta = _delta(xb, MU0)
+    # PHASE-C: finite-sample certified allowance.  Azuma-Hoeffding upper limit on
+    # the commissioning average of the conditional-mean excess (scores lie in
+    # [0,1] and are sequential plug-in scores), failure probability EPS_CAL; the
+    # alarm threshold is spent on alpha - EPS_CAL so that the total budget is alpha.
+    xb_arr = np.asarray(xb)
+    delta_c = max(0.0, xb_arr.mean() - MU0
+                  + np.sqrt(np.log(1.0 / EPS_CAL) / (2.0 * len(xb_arr))))
     delta_o = _delta(xob, MU0_OMNI)
     delta_b = _delta(xbb, MU0)
 
     # ---- monitoring
     logthr = np.log(1.0 / alpha)
     lw = np.zeros(N_LAM); lwd = np.zeros(N_LAM); lwe = np.zeros(N_LAM)
-    lwo = np.zeros(N_LAM); lwb = np.zeros(N_LAM)
+    lwo = np.zeros(N_LAM); lwb = np.zeros(N_LAM); lwc = np.zeros(N_LAM)
     n_in = 0
+    disc_c = np.log1p(LAMS * delta_c)
+    xs_mon = []
+    gacc = np.zeros(N_LAM); gn = 0
+    onset_state = None
+    loc_at_alarm = -1
     disc = np.log1p(LAMS * delta)
     disc_o = np.log1p(LAMS_OMNI * delta_o)
     disc_b = np.log1p(LAMS * delta_b)
@@ -210,7 +225,7 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
     loc = np.zeros(M.N_STOREY)
     keys = ('phase_d', 'phase_e', 'phase', 'phase_omni', 'phase_bb',
             'chart3', 'chart_cal', 'cusum', 'hotelling',
-            'pca', 'msd', 'ewma', 'sr', 'ctm')
+            'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f')
     alarms = {k: -1 for k in keys}
     stat_max = {'chart': 0.0, 'cusum': 0.0, 'pca': 0.0, 'msd': 0.0,
                 'ewma': 0.0, 'sr': 0.0}
@@ -246,6 +261,14 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
     eps_grid = np.linspace(0.05, 0.95, 12)
     lctm = np.zeros(len(eps_grid))
     rng_ctm = np.random.default_rng(20240517)
+    # (v-b) the same martingale with a calibration set drawn from the WHOLE
+    #       commissioning window (plug-in residuals of pass A plus pass B scores)
+    RA = np.array(rA_pi[len(rA_pi) // 3:]) / sig_pi
+    xa = np.minimum(np.clip((RA @ V.T).max(axis=1), 0, None) / C_SCALE, 1.0)
+    cal_f = np.sort(np.concatenate([xa, xb_arr]))
+    n_cal_f = len(cal_f)
+    lctm_f = np.zeros(len(eps_grid))
+    rng_ctm_f = np.random.default_rng(20240518)
 
     for t in range(t_burn, T):
         r = (y[t] - pi.predict(dT[t], q[t])) / sig_pi
@@ -265,6 +288,14 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         lwd += np.log1p(LAMS * (x - MU0)) - disc
         lwo += np.log1p(LAMS_OMNI * (xo - MU0_OMNI)) - disc_o
         lwb += np.log1p(LAMS * (xbn - MU0)) - disc_b
+        lwc += np.log1p(LAMS * (x - MU0)) - disc_c
+        if t_onset is not None:
+            if t == t_onset:
+                onset_state = (lwd.copy(), mix(lwd))
+            if t >= t_onset:
+                gacc += np.log1p(LAMS * (x - MU0)); gn += 1
+        xs_mon.append(x)
+        Lpc = mix(lwc)
         Lp, Lpd, Lpo, Lpb, Lpe = mix(lw), mix(lwd), mix(lwo), mix(lwb), mix(lwe)
 
         cus = max(0.0, cus + (x - MU0) - cusum_k)
@@ -281,6 +312,11 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         p_c = min(max((n_cal - p_c + 1) / (n_cal + 1), 1e-6), 1.0)
         lctm += np.log(eps_grid) + (eps_grid - 1.0) * np.log(p_c)
         L_ctm = mix(lctm)
+        lo_f = np.searchsorted(cal_f, x, side='left'); hi_f = np.searchsorted(cal_f, x, side='right')
+        p_f = lo_f + rng_ctm_f.random() * (1 + hi_f - lo_f)
+        p_f = min(max((n_cal_f - p_f + 1) / (n_cal_f + 1), 1e-6), 1.0)
+        lctm_f += np.log(eps_grid) + (eps_grid - 1.0) * np.log(p_f)
+        L_ctm_f = mix(lctm_f)
         loc += SUP_MAT[k_arg] * max(x - MU0, 0.0)
         stat_max['chart'] = max(stat_max['chart'], ch)
         stat_max['cusum'] = max(stat_max['cusum'], cus)
@@ -290,7 +326,11 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         stat_max['sr'] = max(stat_max['sr'], s_sr)
 
         if alarms['phase'] < 0 and Lp >= logthr: alarms['phase'] = t
-        if alarms['phase_d'] < 0 and Lpd >= logthr: alarms['phase_d'] = t
+        if alarms['phase_d'] < 0 and Lpd >= logthr:
+            alarms['phase_d'] = t
+            loc_at_alarm = int(np.argmax(loc))
+        if alarms['phase_c'] < 0 and Lpc >= np.log(1.0 / (alpha - EPS_CAL)):
+            alarms['phase_c'] = t
         if alarms['phase_e'] < 0 and Lpe >= logthr: alarms['phase_e'] = t
         if alarms['phase_omni'] < 0 and Lpo >= logthr: alarms['phase_omni'] = t
         if alarms['phase_bb'] < 0 and Lpb >= logthr: alarms['phase_bb'] = t
@@ -306,6 +346,7 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
                 if alarms[nm] < 0 and st > h_extra[nm]:
                     alarms[nm] = t
         if alarms['ctm'] < 0 and L_ctm >= logthr: alarms['ctm'] = t
+        if alarms['ctm_f'] < 0 and L_ctm_f >= logthr: alarms['ctm_f'] = t
 
         if collect_paths:
             paths['lwd'].append(Lpd); paths['lw'].append(Lp)
@@ -315,7 +356,20 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         pi.update(dT[t], q[t], _filtered_target(y[t], sig_pi, r))
         bb.update(dT[t], q[t], _filtered_target(y[t], sig_bb, rb))
 
+    xm = np.asarray(xs_mon)
+    blk = 360                                    # 90-day blocks
+    nb = len(xm) // blk
+    blockmax = (float(max(xm[i * blk:(i + 1) * blk].mean() for i in range(nb)) - MU0)
+                if nb else None)
+    acf1 = float(np.corrcoef(xm[:-1], xm[1:])[0, 1])
     out = dict(alarms=alarms, stat_max=stat_max, delta=delta, delta_o=delta_o,
+               delta_c=float(delta_c), loc_at_alarm=loc_at_alarm,
+               x_burn_mean=float(xb_arr.mean()), x_mon_mean=float(xm.mean()),
+               excess_blockmax=blockmax, acf1=acf1,
+               onset=(None if onset_state is None else dict(
+                   lw=onset_state[0].tolist(), mix=float(onset_state[1]),
+                   g=(gacc / max(gn, 1)).tolist(), n=gn)),
+               mu0=MU0,
                delta_b=delta_b, loc=int(np.argmax(loc)), sig_pi=sig_pi, sig_bb=sig_bb,
                coverage=float(n_in / max(T - t_burn, 1)),
                envelope=(float(env_lo), float(env_hi)))

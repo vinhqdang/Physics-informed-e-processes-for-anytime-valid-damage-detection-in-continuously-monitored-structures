@@ -11,6 +11,20 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{array}
+% Revision highlighting: text added or changed in the revision is set in blue.
+% Compile the clean version with:  pdflatex "\def\CLEANBUILD{1}\input{main}"
+\newif\ifclean
+\ifdefined\CLEANBUILD\cleantrue\fi
+\definecolor{revcol}{RGB}{0,70,160}
+\ifclean
+  \newcommand{\rev}[1]{#1}
+  \newenvironment{revblock}{}{}
+\else
+  \newcommand{\rev}[1]{{\color{revcol}#1}}
+  \newenvironment{revblock}{\begingroup\color{revcol}}{\endgroup}
+\fi
 
 \bibliographystyle{apalike}
 \captionsetup{font=small,labelfont=bf}
@@ -20,6 +34,7 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
 \newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\Prob}{\mathbb{P}}
@@ -44,23 +59,22 @@ Article classification: Research paper
 \begin{singlespace}
 \noindent\textbf{Structured abstract}
 
-\noindent\textbf{Purpose} -- Continuously monitored structures are interrogated thousands of times a year, yet damage-detection thresholds are calibrated as if a single test were performed. This paper develops a monitoring rule valid at every instant of a campaign of unspecified length.
+\rev{\noindent\textbf{Purpose} -- Structures are now monitored continuously, yet damage thresholds are usually set as if a single test were run, so the chance of at least one false alarm over a monitoring life can approach one. This paper develops a monitoring rule whose false-alarm budget applies to a campaign of unspecified length, and examines how far that budget can be trusted once it is calibrated from finite commissioning data.}
 
-\noindent\textbf{Design/methodology/approach} -- PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence) combines a physics-structured environmental surrogate derived from eigenvalue perturbation with a betting e-process. Physics constrains the nuisance model, restricts the alternative to a damage cone, and fixes which substructures are identifiable. Evaluation uses 2{,}700 simulated two-year records, 690 epochs of real Z24 bridge data, and thirteen comparators.
+\rev{\noindent\textbf{Design/methodology/approach} -- PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence) predicts how temperature and live load move a structure's natural frequencies with a physics-structured surrogate, scores the remaining discrepancy only in directions that a loss of stiffness can produce (the damage cone), and accumulates the score in a betting e-process, a running measure of evidence that stays valid however long monitoring continues. Evaluation uses 2{,}600 simulated records of an eight-storey frame (2{,}300 two-year and 300 four-year), thirteen comparators, and 690 ambient-vibration epochs (plus 711 forced-vibration epochs) from the Z24 bridge.}
 
-\noindent\textbf{Findings} -- PHASE raised no false alarm in 300 undamaged simulated records at one- and three-year horizons. A $3\sigma$ chart alarmed in every record within days, a PCA normalisation chart reached four times the nominal rate, and a conformal test martingale on the identical score three times it. Five per cent loss was detected in every record (median 59 days). On Z24, PHASE ignored a real stiffness recovery that omnibus detectors flagged, and responded to pier settlement sooner than a cone-free ablation.
+\rev{\noindent\textbf{Findings} -- The false-alarm guarantee is a conditional result: it holds if the expected score of an undamaged structure stays below a stated bound. The commissioning estimate of that bound used in practice is an empirical calibration, not a proof. With one year of commissioning, PHASE raised no false alarm in 300 undamaged records at a one-year horizon or in 300 at three years (95\% upper limit 1.2\% in each). A $3\sigma$ chart alarmed in every record within days. A 5\% stiffness loss at storey~3 was detected in all 150 records (median delay 59 days); a 2\% loss was detected in only 34\%. Commissioning shorter than a season destroyed false-alarm control. On Z24, which has no environmental covariates and no structural model, a reduced version stayed silent when the bridge recovered stiffness, which omnibus detectors flagged; those data cannot separate damage from day-to-day environmental change.}
 
-\noindent\textbf{Research limitations/implications} -- Two limitations are structural and reproduce on Z24: uniform stiffness loss is provably confounded with temperature change, and calibration requires commissioning spanning the operational envelope.
+\rev{\noindent\textbf{Research limitations/implications} -- Validation of the complete framework is simulation-based; the Z24 test supports only the directional-discrimination and commissioning findings. Stiffness-loss patterns lying in the nuisance subspace, including uniform loss, cannot be told apart from temperature or load change using frequencies, and storey-level localisation failed at storey~1 although its identifiable fraction is non-zero.}
 
-\noindent\textbf{Practical implications} -- At most a proportion $\alpha$ of monitored structures ever raise a false alarm across the whole monitoring life, making alarm governance a stated budget rather than a tuning exercise.
+\rev{\noindent\textbf{Practical implications} -- Provided commissioning covers the operating environment and the stated assumptions hold, at most a proportion $\alpha$ of monitored structures raise any false alarm over their whole monitoring life, which turns alarm governance into a budget. Contractual or deployment commitments should remain conditional on that coverage and on the detection delays reported here.}
 
-\noindent\textbf{Originality/value} -- First application of safe anytime-valid inference to vibration-based structural health monitoring, showing that physics constrains identifiability, not only estimation.
-
+\rev{\noindent\textbf{Originality/value} -- To the authors' knowledge, this is the first use of betting e-processes with physics-derived damage directions in vibration-based structural health monitoring, and it shows that physics can constrain what is identifiable and not only how the environment is modelled.}
 \vspace{0.6em}
 \noindent\textbf{Keywords} -- Structural health monitoring; Anytime-valid inference; E-process; Physics-informed machine learning; Digital twin; Damage detection; False alarms; Infrastructure resilience; Environmental and operational variability; Predictive maintenance
 
 \vspace{0.4em}
-\noindent\textbf{Word count} -- approximately 10{,}000 words including references and appendix.
+\noindent\textbf{Word count} -- \rev{approximately 13{,}000 words including references and appendices.}
 \end{singlespace}
 
 \newpage
@@ -70,34 +84,38 @@ Article classification: Research paper
 
 Instrumented buildings and bridges no longer produce measurement campaigns; they produce streams. A modern monitoring installation identifies modal properties automatically, every few hours, indefinitely \citep{mishra2022iot}. The statistical machinery that decides whether those properties indicate damage, however, is largely inherited from an era of episodic testing. A control limit is placed at three standard deviations of a reference population, or a hypothesis test is applied at the 5\% level, and the resulting rule is then evaluated afresh at every epoch for years. The error rate that was nominally controlled is the error rate of a single decision. The error rate that the asset owner actually experiences is the probability that the rule ever fires while the structure is healthy, and under continuous interrogation that probability tends to one.
 
-This is not a subtle effect. In the experiments reported below, a $3\sigma$ chart applied to a well-specified residual stream raised its first false alarm after a median of two days of monitoring, and did so in every one of 300 undamaged records. A repeatedly applied Hotelling $T^2$ test at the 1\% level behaved identically. Practitioners are of course aware that raw charts alarm too often, and the usual response is to raise thresholds until alarms become rare in practice. That response is a silent renegotiation of the error guarantee: the resulting threshold has no stated operating characteristic, it is specific to the horizon and the data over which it was tuned, and, as this paper shows, buying false-alarm control this way can extinguish the power to detect the damage the system was installed to find.
+This is not a subtle effect. In the experiments reported below, a $3\sigma$ chart applied to the \rev{standardised residuals of the same surrogate used by PHASE} raised its first false alarm after a median of two days of monitoring, and did so in every one of 300 undamaged records. A repeatedly applied Hotelling $T^2$ test at the 1\% level behaved identically. Practitioners are of course aware that raw charts alarm too often, and \rev{one common response is} to raise thresholds until alarms become rare in practice. \rev{Where that is done without a stated horizon, it renegotiates the error guarantee silently:} the resulting threshold has no stated operating characteristic, it is specific to the horizon and the data over which it was tuned, and, as this paper shows \rev{for the implementations tested here}, buying false-alarm control this way can extinguish the power to detect the damage the system was installed to find. \rev{This is a statement about the specific charts we implemented, not about every environmental-normalisation method; Section~2.1 discusses the closest engineering studies.}
 
 The consequences run in both directions and both are material for sustainability. Alarms that cannot be trusted are eventually not acted upon, which is the mechanism by which monitoring systems quietly stop informing maintenance decisions \citep{cawley2018gap}; each alarm that is acted upon consumes inspection resources, crew mobilisation, access equipment and embodied carbon. Damage detected late, conversely, forecloses the repair options that preserve embodied carbon and forces replacement. A monitoring rule with a calibrated, horizon-free error guarantee is therefore not a statistical nicety. It is a precondition for monitoring to support the life-extension decisions on which the sustainability case for instrumented infrastructure rests, and it speaks directly to United Nations Sustainable Development Goals 9, 11 and 13.
 
-The statistical tools required to fix this have matured only recently. Safe anytime-valid inference (SAVI) replaces the $p$-value with the e-value, a non-negative statistic whose expectation under the null is at most one, and replaces the fixed-sample test with a non-negative martingale whose value is interpretable as accumulated evidence \citep{ramdas2023game,grunwald2024safe,vovk2021evalues}. Ville's inequality bounds the probability that such a process ever exceeds $1/\alpha$ by $\alpha$, whatever the stopping rule, whatever the horizon, and whether or not the analyst peeks. These methods have been taken up in clinical trials and online experimentation but, to our knowledge, not in vibration-based SHM, which is precisely a setting of unbounded continuous monitoring under optional stopping by a human operator.
+The statistical tools required to fix this have matured only recently. Safe anytime-valid inference (SAVI) replaces the $p$-value with the e-value, a non-negative statistic whose expectation under the null is at most one, and replaces the fixed-sample test with a non-negative martingale whose value is interpretable as accumulated evidence \citep{ramdas2023game,grunwald2024safe,vovk2021evalues}. Ville's inequality bounds the probability that such a process ever exceeds $1/\alpha$ by $\alpha$, whatever the stopping rule, whatever the horizon, and whether or not the analyst peeks. These methods have been taken up in clinical trials and online experimentation but, to our knowledge, not in vibration-based SHM, which is precisely a setting of unbounded continuous monitoring under optional stopping by a human operator. \rev{Sequential testing is not new to SHM: residual-based sequential probability ratio tests exist \citep{kopsaftopoulos2015sprt}. What is new here is the error criterion (a time-uniform budget for the probability of ever alarming), the nonparametric conditional-mean null, and the physics-derived alternative; Section~2.3 sets out the differences.}
 
 Transplanting the machinery is not, however, sufficient, because SHM's difficulty is not primarily multiplicity. It is that environmental and operational variation (EOV) moves modal properties by more than damage does \citep{sohn2007eov,peeters2001z24}. In the simulations reported here, seasonal and diurnal temperature variation moves the fundamental frequency by roughly $\pm2\%$ while a 5\% stiffness loss at one storey moves it by $0.49\%$. Any monitor is therefore only as good as its model of the nuisance, and a betting process built on a poorly specified residual stream will accumulate evidence against the null for reasons that have nothing to do with damage. This is where physics earns its place, and this paper argues that it earns it in four distinct ways rather than the one usually recognised.
 
-The method developed here, PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence) and sketched in Figure~\ref{fig:pipeline}, uses first-order eigenvalue perturbation of the structure's finite element model to: (i) constrain the EOV surrogate to $m+2$ free parameters, with the temperature response tied across modes by an exact identity, rather than the $5m$ parameters of an unconstrained regression; (ii) restrict the alternative hypothesis to a polyhedral cone of physically admissible directions, since stiffness loss can only reduce frequencies; (iii) determine which stiffness-loss patterns are identifiable at all, since temperature reaches the modal set through a specific direction and any damage pattern parallel to it is confounded with a thermal change as a matter of structure rather than of statistical power; and (iv) protect identifiable damage from being absorbed by the online adaptation of the nuisance model.
+The method developed here, PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence) and sketched in Figure~\ref{fig:pipeline}, uses first-order eigenvalue perturbation of the structure's finite element model to: (i) constrain the EOV surrogate to $m+2$ free parameters, with the temperature response tied across modes by an exact identity, rather than the $5m$ parameters of an unconstrained regression; (ii) restrict the alternative hypothesis to a polyhedral cone of physically admissible directions, since stiffness loss can only reduce frequencies; (iii) determine which stiffness-loss patterns are identifiable \rev{relative to the nuisance} at all, since temperature \rev{and live load reach} the modal set through specific directions and any damage pattern whose signature lies in the span of those directions is confounded with a nuisance change as a matter of structure rather than of statistical power; and (iv) protect identifiable damage from being absorbed by the online adaptation of the nuisance model.
 
 \paragraph{Contributions.} The paper makes the following contributions.
 \begin{enumerate}
-\item It formulates damage detection under continuous monitoring as an anytime-valid decision problem and gives an alarm rule, PHASE, whose family-wise false-alarm probability over an unbounded monitoring life is at most $\alpha$ (Proposition~\ref{prop:valid}).
-\item It derives the damage cone and the nuisance sensitivity subspace from eigenvalue perturbation, and proves an identifiability result: a stiffness-loss pattern is confounded with a thermal change if and only if it is proportional to the uniform pattern (Proposition~\ref{prop:ident}). This yields a per-substructure detectability map that tells an engineer which parts of a structure a given modal set can genuinely monitor.
-\item It prices surrogate misspecification explicitly. If the physics-structured surrogate leaves a residual bias $\delta$, the evidence process is discounted at rate $\log(1+\lambda\delta)$ per epoch and remains valid (Proposition~\ref{prop:delta}); better physics is therefore not merely convenient but quantitatively purchases faster detection (Proposition~\ref{prop:delay}).
-\item It evaluates the method on real measurements from the Z24 bridge progressive damage test, where the commissioning-envelope requirement and the value of the physically restricted alternative both reproduce, and where the limits of what any monitor can conclude without a covariate record become visible.
-\item It reports a controlled simulation study over 2{,}700 two-year records against thirteen comparators spanning current SHM practice, classical quickest detection and distribution-free anytime-valid testing, comparing PHASE against conventional charts, an oracle-calibrated CUSUM, and ablations that remove the cone or the physics-structured surrogate, and it reports the costs of validity as well as its benefits.
+\item It formulates damage detection under continuous monitoring as an anytime-valid decision problem and gives an alarm rule, PHASE, whose family-wise false-alarm probability over an unbounded monitoring life is at most $\alpha$ \emph{conditionally} on a bound for the expected score (Proposition~\ref{prop:valid}). \rev{It then states precisely what is and is not established for the implemented commissioning-based calibration of that bound: a finite-sample result with an explicit calibration-failure term (Proposition~\ref{prop:delta}), and an empirical assessment of how the implemented rule behaves.}
+\item It derives the damage cone and the nuisance sensitivity subspace from eigenvalue perturbation, and proves an identifiability result: a stiffness-loss pattern is confounded with nuisance change if and only if its standardised signature lies in the nuisance subspace (Proposition~\ref{prop:ident}). \rev{Uniform loss is always confounded; it is the only confounded pattern only under additional conditions that the frame studied here does not meet. Identifiability relative to the nuisance is distinguished from unique localisation.} This yields a per-substructure detectability map that tells an engineer which parts of a structure a given modal set can \rev{support claims about}.
+\item It prices surrogate misspecification explicitly. If the physics-structured surrogate leaves a residual bias $\delta$, the evidence process is discounted at rate $\log(1+\lambda\delta)$ per epoch and remains valid (Proposition~\ref{prop:delta}); \rev{a corrected delay bound that uses the relevant mixture component} shows how the discount trades against detection speed (Proposition~\ref{prop:delay}).
+\item It evaluates the method on real measurements from the Z24 bridge progressive damage test. \rev{Only a reduced version of the method can be run there. The data support the commissioning-envelope finding and the directional discrimination; chronological and dependence-preserving re-analyses show which of the remaining results depend on the exchangeability of epochs within a state.}
+\item It reports a controlled simulation study over \rev{2{,}600 simulated records (2{,}300 two-year and 300 four-year)} against thirteen comparators spanning current SHM practice, classical quickest detection and distribution-free anytime-valid testing, \rev{with interval estimates for all rates, a late-onset experiment, a finer commissioning sweep, and a finite-sample-certified variant}, and it reports the costs of validity as well as its benefits.
 \end{enumerate}
 
 Section~2 reviews the relevant literature. Section~3 formalises the monitoring problem, derives the physics and develops PHASE. Section~4 reports the simulation study, Section~5 the application to the Z24 bridge, and Section~6 discusses implications and concludes.
 
-\section{Background and related work}
+\section{Background and related work}\label{sec:related}
 
-\subsection{Vibration-based SHM and environmental variability}
+\subsection{Vibration-based SHM and environmental variability}\label{sec:related-shm}
 
 The statistical pattern recognition paradigm for SHM \citep{farrar2007intro,farrar2012machine} organises damage identification into operational evaluation, data acquisition, feature extraction and statistical modelling, and its axioms make explicit that damage detection always requires a comparison between two system states \citep{worden2007axioms}. Modal frequencies remain the most widely used global feature because they are cheap to identify from ambient response and are directly interpretable through the eigenvalue problem \citep{doebling1998summary,avci2021review}.
 
 Their weakness is equally well established. Temperature changes the elastic modulus and boundary conditions; live load changes the mass; the resulting modal variation routinely exceeds that caused by structurally significant damage \citep{sohn1999alamosa,sohn2007eov}. Two decades of work on removing these effects have been surveyed recently \citep{wang2022eliminating,han2021temperature}, and a 2025 critical review of baseline compensation, adaptation and reference-free techniques concludes that robustness to environmental and operational variability remains the principal obstacle to deployment \citep{rezazadeh2025eov}. The Z24 bridge campaign, in which a bridge was monitored for a year before progressive artificial damage, remains the canonical demonstration that environmental effects and damage events must be separated before any detection claim is meaningful \citep{peeters2001z24}. Responses in the literature include data normalisation, regression of features on measured covariates, latent-variable methods, and switching response-surface models for structures whose EOV behaviour is regime-dependent \citep{worden2018switching}. What these approaches share is a focus on removing the nuisance; the decision rule applied to the cleaned residual is typically a control limit whose behaviour under repeated application is not analysed.
+
+\begin{revblock}
+The closest primary engineering studies deserve a direct comparison. \citet{deraemaeker2008output} combine statistical compensation of environmental effects with monitoring of output-only vibration features, and \citet{maes2022kw51} evaluate regression-based and robust-PCA-based compensation on measurements from the KW51 railway bridge across a retrofit. Related work couples regression, principal-component or cointegration models of the environment with control charts on frequencies or autoregressive coefficients \citep{fugate2001spc,kullaa2003z24,yan2005pca,magalhaes2012arch,cross2012cointegration}. These studies address the question of \emph{how well the environment can be removed}, usually on measured data and with a fixed-sample or fixed-horizon threshold, and they evaluate detection and false-alarm rates empirically. PHASE does not compete with them on environmental compensation: its surrogate is deliberately simple. Its contribution is orthogonal, namely a decision layer whose false-alarm budget is stated over the whole monitoring life and whose alternative is restricted to physically admissible directions. The PCA-EOV chart and the control charts we implement (Section~4.1.3) are single, simple instances of this family, calibrated on simulated healthy campaigns; their poor showing here, in a simulation with deliberately unmodelled thermal lag, gradient and load-proxy error, says nothing about how well carefully tuned compensation behaves on other structures, and \citet{maes2022kw51} report that compensation can work well on real data.
+\end{revblock}
 
 \subsection{Physics-informed learning and digital twins in the built environment}
 
@@ -105,17 +123,47 @@ Physics-informed machine learning embeds governing equations, symmetries or know
 
 Almost all of this work uses physics to improve \emph{estimation}: a better surrogate, a better reduced-order model, better extrapolation. The present paper uses physics additionally to constrain \emph{inference} -- which alternatives are admissible, which are identifiable, and what may be learned online without destroying the detector -- which is a distinct and, we argue, under-exploited role.
 
-\subsection{Sequential monitoring and anytime-valid inference}
+\subsection{Sequential monitoring and anytime-valid inference}\label{sec:related-seq}
 
-Sequential change detection has a long history, from the CUSUM \citep{page1954cusum} and its optimality properties \citep{lorden1971procedures} to the sequential probability ratio test \citep{wald1945sequential}. These procedures are optimal in a minimax detection-delay sense subject to a constraint on the average run length to false alarm, and they require the pre-change distribution to be known or accurately estimated. In SHM practice the pre-change distribution is precisely what is uncertain, because it is the output of a fitted EOV model applied to a non-stationary environment.
+Sequential change detection has a long history, from the sequential probability ratio test \citep{wald1945sequential} to the CUSUM \citep{page1954cusum} and its optimality properties \citep{lorden1971procedures,moustakides1986optimal,pollak1985optimal}. \rev{These procedures answer different questions, and the differences matter for what a false-alarm guarantee means (Table~\ref{tab:criteria}).}
 
-Safe anytime-valid inference offers a different guarantee. An e-value is a non-negative statistic with null expectation at most one; a test martingale is a running product of conditional e-values; Ville's inequality then bounds the probability that the martingale ever exceeds $1/\alpha$ by $\alpha$ \citep{ramdas2023game,grunwald2024safe}. Betting formulations construct these processes as the wealth of a gambler placing predictable bets \citep{waudbysmith2024betting,kelly1956information}, time-uniform confidence sequences arise from the same machinery \citep{howard2021timeuniform}, and e-detectors extend it to change detection \citep{shin2023edetectors}. E-values also combine gracefully: arbitrary dependent e-values may be merged by averaging \citep{vovk2021evalues}, and false discovery rate control across many hypotheses follows directly \citep{wang2022fdr}, which matters when a structure is divided into many monitored zones.
+\begin{revblock}
+\noindent\emph{SPRT.} Wald's test decides between two specified hypotheses about the data distribution with prescribed type~I and type~II error probabilities; those probabilities refer to one test run until it stops. A residual-based SPRT framework for vibration monitoring \citep{kopsaftopoulos2015sprt} applies this logic to the residuals of a vibration model and supports decisions among pre-specified damage hypotheses. Restarting the test after each decision does not by itself bound the probability of ever alarming over an unbounded campaign.
 
-\subsection{Research gap}
+\noindent\emph{CUSUM and Shiryaev--Roberts.} These minimise worst-case detection delay subject to a lower bound on the \emph{average run length} to false alarm, and they require the pre- and post-change distributions to be known or accurately estimated. An average-run-length constraint controls a mean, not a probability: if the false-alarm time is roughly geometric with mean $\gamma$, the probability of at least one false alarm within a horizon $h$ is about $h/\gamma$ for small $h/\gamma$ and tends to one thereafter. In SHM practice the pre-change distribution is precisely what is uncertain, because it is the output of a fitted EOV model applied to a non-stationary environment, and thresholds are usually set by simulation (as in our oracle comparators).
 
-Three gaps motivate this work. First, SHM decision rules are evaluated at fixed sample sizes but deployed continuously, and the literature reports few if any measurements of the family-wise false-alarm probability actually experienced over a monitoring life. Second, physics-informed SHM has concentrated on the nuisance model, leaving the admissibility and identifiability of damage alternatives largely implicit. Third, anytime-valid inference has not been connected to a domain in which its central assumption -- unbounded monitoring with operator-driven stopping -- is not an idealisation but a description of ordinary practice.
+\noindent\emph{E-detectors.} E-detectors \citep{shin2023edetectors} are nonparametric change detectors built from e-processes. Like the CUSUM family they sum evidence over candidate change points and their false-alarm guarantee is an average-run-length bound under a composite null; they therefore detect changes quickly without a known post-change law, but they do not provide the time-uniform bound $\Prob_{H_0}(\tau<\infty)\le\alpha$ that PHASE targets.
 
-\section{Problem formulation and the PHASE monitor}
+\noindent\emph{Conformal test martingales.} A conformal test martingale \citep{vovk2021testing} tests whether the whole observation sequence is exchangeable. Ville's inequality bounds the probability that it ever exceeds $1/\alpha$ \emph{under exchangeability}. Its null is therefore a statement about the joint distribution of the sequence rather than about the structure being in its reference condition: any non-exchangeability, such as a seasonal drift in a healthy structure's score, violates the null even though nothing has been damaged.
+\end{revblock}
+
+\begin{table}[t]
+\centering
+\small
+\begin{revblock}
+\caption{\rev{Error criteria and assumptions of the sequential procedures discussed in Section~2.3, and where PHASE sits among them.}}
+\label{tab:criteria}
+\begin{tabular}{p{2.7cm}p{3.6cm}p{3.7cm}p{4.4cm}}
+\toprule
+Procedure & Null / model assumed & Error criterion & Consequence for monitoring \\
+\midrule
+SPRT & Two specified densities (simple or parametric) & Type~I and II error of one test run to a decision & Per-run control; restarts need their own budget \\
+CUSUM, Shiryaev--Roberts & Known or estimated pre- and post-change laws & Average run length to false alarm; minimax delay & Mean, not probability, of false alarm; probability within a horizon grows with the horizon \\
+E-detector & Composite null with e-process under it & Average run length lower bound, nonparametric & Quick change detection without post-change law; no time-uniform probability bound \\
+Conformal test martingale & Exchangeable sequence & $\Prob(\sup M_t\ge1/\alpha)\le\alpha$ under exchangeability & Valid only if calibration and monitoring scores are exchangeable \\
+PHASE (this paper) & Conditional mean of a bounded score $\le\mu_0+\delta$ & $\Prob_{H_0}(\tau<\infty)\le\alpha$ for any dependence and stopping rule & Lifetime budget, conditional on the mean bound; slower than oracle CUSUM \\
+\bottomrule
+\end{tabular}
+\end{revblock}
+\end{table}
+
+Safe anytime-valid inference offers \rev{the last of these criteria}. An e-value is a non-negative statistic with null expectation at most one; a test martingale is a running product of conditional e-values; Ville's inequality then bounds the probability that the martingale ever exceeds $1/\alpha$ by $\alpha$ \citep{ramdas2023game,grunwald2024safe}. Betting formulations construct these processes as the wealth of a gambler placing predictable bets \citep{waudbysmith2024betting,kelly1956information}, time-uniform confidence sequences arise from the same machinery \citep{howard2021timeuniform}, and e-detectors extend it to change detection \citep{shin2023edetectors}. E-values also combine gracefully: arbitrary dependent e-values may be merged by averaging \citep{vovk2021evalues}, and false discovery rate control across many hypotheses follows directly \citep{wang2022fdr}, which matters when a structure is divided into many monitored zones.
+
+\subsection{Research gap}\label{sec:gap}
+
+Three gaps motivate this work. First, SHM decision rules are evaluated at fixed sample sizes but deployed continuously, and the literature reports few if any measurements of the family-wise false-alarm probability actually experienced over a monitoring life. Second, physics-informed SHM has concentrated on the nuisance model, leaving the admissibility and identifiability of damage alternatives largely implicit. Third, anytime-valid inference has not, \rev{to our knowledge,} been connected to a domain in which its central assumption -- unbounded monitoring with operator-driven stopping -- is not an idealisation but a description of ordinary practice. \rev{Sequential tests for SHM do exist \citep{kopsaftopoulos2015sprt}, as do compensation-plus-monitoring studies \citep{deraemaeker2008output,maes2022kw51}; we are not aware of earlier work that combines a nonparametric e-process with a physics-derived alternative cone and an identifiability-aware adaptation rule, and we make no wider claim of priority.}
+
+\section{Problem formulation and the PHASE monitor}\label{sec:method}
 
 
 \begin{figure}[t]
@@ -129,14 +177,18 @@ Three gaps motivate this work. First, SHM decision rules are evaluated at fixed 
 
 A structure is interrogated at epochs $t=1,2,\dots$. At each epoch an automated operational modal analysis returns the first $m$ identified natural frequencies, collected as $y_t=\log \hat f_t\in\R^m$, together with measured covariates $z_t$ comprising ambient temperature deviation $\Delta T_t$ and a live-load proxy $q_t$. Let $\F_t=\sigma(y_1,z_1,\dots,y_t,z_t)$.
 
-A commissioning window $t\le t_0$ is used to calibrate the monitor; monitoring proper runs for $t>t_0$ without a specified end. Write $H_0$ for the hypothesis that the structure remains in its reference condition throughout. A monitor is a stopping time $\tau$, the alarm time. The quantity of operational interest is
+A commissioning window $t\le t_0$ is used to calibrate the monitor; monitoring proper runs for $t>t_0$ without a specified end. \rev{A notation and acronym list is given in Appendix~A.} Write $H_0$ for the hypothesis that the structure remains in its reference condition throughout. A monitor is a stopping time $\tau$, the alarm time. The quantity of operational interest is
 \begin{equation}
 \mathrm{FWFA}(\alpha) \;=\; \Prob_{H_0}\!\left(\tau<\infty\right),
 \label{eq:fwfa}
 \end{equation}
-the probability that the monitor \emph{ever} alarms on a healthy structure. We require $\mathrm{FWFA}\le\alpha$ for a horizon that is neither fixed nor known in advance. This is a strictly stronger requirement than per-epoch error control, and strictly stronger than average-run-length control, since it constrains the entire monitoring life rather than a rate.
+the probability that the monitor \emph{ever} alarms on a healthy structure. We require $\mathrm{FWFA}\le\alpha$ for a horizon that is neither fixed nor known in advance. This is a strictly stronger requirement than per-epoch error control, and strictly stronger than average-run-length control, since it constrains the entire monitoring life rather than a rate. \rev{It concerns the first alarm only: after an alarm and an investigation the monitor is restarted, and a restart needs its own share of the budget (Section~6.1).}
 
-\subsection{Physics: sensitivities, the damage cone, and the nuisance subspace}
+\begin{revblock}
+\noindent\emph{In words.} An \emph{e-process} is a running tally of evidence against ``the structure is unchanged'', built like a gambler's wealth: at each epoch the monitor bets a fraction of its current wealth that the score will exceed its healthy average. If the structure really is unchanged, the wealth cannot grow on average, so reaching $1/\alpha$ times the starting wealth is very unlikely, and that holds no matter when, or how often, one looks.
+\end{revblock}
+
+\subsection{Physics: sensitivities, the damage cone, and the nuisance subspace}\label{sec:physics}
 
 Let $M$ be the mass matrix and $K(\theta)=\sum_{j=1}^{n}\theta_j K_j$ the stiffness matrix, with $K_j$ the contribution of substructure $j$ and $\theta_j$ a multiplier equal to one in the reference state. Writing $\lambda_i=\omega_i^2$ for the eigenvalues and $\phi_i$ for the mode shapes of $K\phi=\lambda M\phi$, first-order perturbation gives
 \begin{equation}
@@ -166,27 +218,34 @@ Let $D=\mathrm{diag}(\sigma_1,\dots,\sigma_m)$ hold the identification scatter o
 \end{equation}
 which is pointed because all its generators lie in the negative orthant. The \emph{nuisance sensitivity subspace} is $\mathcal{N}=\mathrm{span}\{D^{-1}\kappa,\,D^{-1}\eta\}$, with orthogonal projector $P_\perp=I-\Pi_{\mathcal{N}}$.
 
-\begin{proposition}[Identifiability]\label{prop:ident}
-To first order, a stiffness-loss pattern $\rho$ produces a modal signature that is indistinguishable from some combination of a uniform modulus change and a live-load change if and only if $D^{-1}S\rho\in\mathcal{N}$. In particular, uniform stiffness loss $\rho\propto\mathbf{1}$ is always confounded with a temperature change. The identifiable part of the signature of $\rho$ is $P_\perp D^{-1}S\rho$, and monitoring of $n$ substructures requires $m>\dim\mathcal{N}=2$ identified modes.
+\begin{revblock}
+\noindent\emph{In words.} The damage cone collects every frequency-change pattern that some non-negative loss of stiffness could produce; a change outside it (all frequencies rising, for example) is not damage of that kind. The nuisance subspace collects the frequency-change patterns that temperature and live load can produce. Damage whose signature lies inside that subspace looks, to a frequency-based monitor, like weather or occupancy.
+\end{revblock}
+
+\begin{proposition}[Identifiability relative to the nuisance]\label{prop:ident}
+Let $A=D^{-1}S$. \rev{(a)} To first order, a stiffness-loss pattern $\rho$ produces a modal signature that is indistinguishable from some combination of a uniform modulus change and a live-load change if and only if $A\rho\in\mathcal{N}$. \rev{These patterns form a linear subspace $\mathcal{K}=\{\rho:P_\perp A\rho=0\}$ of dimension $n-\mathrm{rank}(P_\perp A)\ge n-(m-\dim\mathcal{N})$.}
+\rev{(b)} Uniform stiffness loss $\rho\propto\mathbf{1}$ always lies in $\mathcal{K}$.
+\rev{(c) If $A$ has full column rank $n$ and the range of $A$ contains no nuisance direction other than $D^{-1}\kappa$ (in particular if temperature is the only nuisance), then $\mathcal{K}=\mathrm{span}\{\mathbf{1}\}$. Conversely, $\mathcal{K}\supsetneq\mathrm{span}\{\mathbf{1}\}$ whenever $\ker A\ne\{0\}$ (in particular whenever $n>m$) or whenever $\mathcal{N}$ contains a direction in the range of $A$ that is not parallel to $D^{-1}\kappa$.}
+\rev{(d)} The identifiable part of the signature of $\rho$ is $P_\perp A\rho$. \rev{Two patterns $\rho,\rho'$ can be told apart from frequencies, to first order, only if $P_\perp A(\rho-\rho')\neq0$; hence at most $\mathrm{rank}(P_\perp A)\le m-\dim\mathcal{N}$ independent combinations of damage can be resolved, and a non-zero identifiable fraction of each substructure is necessary but not sufficient for unique localisation among $n$ substructures.}
 \end{proposition}
 
-The proof is immediate from \eqref{eq:rowsum} and is given in the Appendix. The practical content is considerable: no monitor, however sophisticated, can separate a global loss of stiffness from a warming of the structure using modal frequencies alone, and the ratio
+The proof is given in the Appendix. The practical content is considerable: no monitor, however sophisticated, can separate \rev{a pattern in $\mathcal{K}$, and in particular} a global loss of stiffness, from a warming of the structure using modal frequencies alone, and the ratio
 \begin{equation}
 \varrho_j \;=\; \frac{\|P_\perp \tilde d_j\|}{\|\tilde d_j\|}\ \in[0,1]
 \label{eq:retention}
 \end{equation}
-gives a design-time \emph{detectability map} over the structure: the fraction of substructure $j$'s signature that survives confounding with the nuisance. Section~4.2.5 shows that this map is informative about localisation but, over practical horizons, not about detection, for reasons that are themselves instructive.
+gives a design-time \emph{detectability map} over the structure: the fraction of substructure $j$'s signature that survives confounding with the nuisance. \begin{revblock}Two cautions follow from parts (c) and (d). First, the statement that thermal confounding occurs only for uniform loss is not true in general: for the eight-storey frame of Section~4.1 ($n=8$, $m=6$, $\dim\mathcal{N}=2$) the confounded subspace has dimension four, and equal stiffness loss at storeys 1 and 8 is confounded exactly (the projected signatures are antiparallel, with cosine $-1.000$ and a numerical residual below $10^{-13}$). Second, $\varrho_j>0$ is identifiability \emph{relative to the nuisance}, not localisability: it says that substructure $j$'s signature is not wholly absorbed by temperature and load, but says nothing about whether it can be distinguished from the signature of substructure $k$. The pairwise cosine $\langle P_\perp\tilde d_j,P_\perp\tilde d_k\rangle/(\|P_\perp\tilde d_j\|\|P_\perp\tilde d_k\|)$ measures how alike the identifiable signatures of single-storey damage are; with only $m-\dim\mathcal{N}=4$ resolvable directions for eight storeys, the eight identifiable signatures cannot be linearly independent.\end{revblock} Section~4.2.5 shows that the map is informative about \rev{detection only weakly and about} localisation \rev{only partly}, for reasons that are themselves instructive.
 
 
 \subsection{Physics-structured nuisance surrogate with sequential plug-in}
 
 The surrogate predicts reference-condition log-frequencies from covariates. Physics fixes its structure:
 \begin{equation}
-g_\beta(z_t)_i \;=\; a_i \;+\; b\,\kappa_i\,\Delta T_t \;+\; c\,\eta_i\, q_t ,
-\qquad \beta=(a_1,\dots,a_m,b,c),
+g_\beta(z_t)_i \;=\; a_i \;+\; b_T\,\kappa_i\,\Delta T_t \;+\; \rev{b_q}\,\eta_i\, q_t ,
+\qquad \beta=(a_1,\dots,a_m,b_T,\rev{b_q}),
 \label{eq:surrogate}
 \end{equation}
-with $\kappa_i$ and $\eta_i$ supplied by the digital twin through \eqref{eq:sens}. The model has $m+2$ free scalars; the temperature response is a single scalar shared across all modes, an exact consequence of \eqref{eq:rowsum}. The comparator used in the ablations is an unconstrained per-mode quadratic regression on $[1,\Delta T,\Delta T^2,q,\Delta T q]$ with $5m$ free parameters.
+with $\kappa_i$ and $\eta_i$ supplied by the digital twin through \eqref{eq:sens}. The model has $m+2$ free scalars; the temperature response is a single scalar \rev{$b_T$} shared across all modes, an exact consequence of \eqref{eq:rowsum}. \rev{(The load coefficient $b_q$ is unrelated to the score-saturation scale $c$ of equation~\eqref{eq:score}.)} The comparator used in the ablations is an unconstrained per-mode quadratic regression on $[1,\Delta T,\Delta T^2,q,\Delta T q]$ with $5m$ free parameters.
 
 Coefficients are updated recursively with forgetting factor $\nu$, and crucially the prediction at epoch $t$ uses $\hat\beta_{t-1}$, estimated from data up to $t-1$ only. The standardised residual
 \begin{equation}
@@ -214,9 +273,9 @@ The null hypothesis is stated directly in terms of the score,
 H_0:\quad \E[X_t\mid \F_{t-1}]\ \le\ \mu_0 \quad\text{for all } t,
 \label{eq:null}
 \end{equation}
-where $\mu_0=\E_{\varepsilon\sim N(0,I_m)}\big[\min(\max_k\langle v_k,\varepsilon\rangle^+/c,1)\big]$ is a design-time constant obtained once by Monte Carlo from the digital twin. Stating the null this way is deliberate: it makes explicit that the surrogate's task is to render \eqref{eq:null} true in the reference condition, and Section~3.6 prices the failure to do so rather than assuming it away.
+where $\mu_0=\E_{\varepsilon\sim N(0,I_m)}\big[\min(\max_k\langle v_k,\varepsilon\rangle^+/c,1)\big]$ is a design-time constant obtained once by Monte Carlo from the digital twin. Stating the null this way is deliberate: it makes explicit that the surrogate's task is to render \eqref{eq:null} true in the reference condition, and Section~3.6 prices the failure to do so rather than assuming it away. \rev{In words: given everything observed up to the previous epoch, the score of an undamaged structure is on average no larger than the constant $\mu_0$ that the digital twin predicts for ideal, correctly modelled noise. The assumption is about conditional averages of a bounded score; it needs no distributional form and no independence, but it is an assumption about the future, and Section~3.6 explains what it demands of commissioning.}
 
-\subsection{Betting e-process and the alarm rule}
+\subsection{Betting e-process and the alarm rule}\label{sec:eprocess}
 
 For $\lambda\in[0,1/\mu_0)$ define the wealth process $W_0^\lambda=1$ and
 \begin{equation}
@@ -235,32 +294,57 @@ mixing over a fixed geometric grid $\Lambda$ so that no bet size need be tuned \
 Under \eqref{eq:null}, $(W_t)_{t>t_0}$ is a non-negative supermartingale with $W_{t_0}=1$, and consequently $\Prob_{H_0}(\exists t: W_t\ge1/\alpha)\le\alpha$. The bound holds for arbitrary dependence in $(y_t,z_t)$, for any predictable bet sequence, for sequential plug-in estimation of $\hat\beta$, and irrespective of when or how often the operator inspects the process.
 \end{proposition}
 
-Two features deserve emphasis. First, no pre-change distribution need be known: only the conditional mean bound \eqref{eq:null} is required, and the score is bounded by construction, so no tail assumption enters. Second, $\log W_t$ is directly interpretable as accumulated evidence in nats, so an operator may act on a rising process before it crosses the threshold without invalidating anything -- the guarantee is uniform over stopping rules.
+Two features deserve emphasis. First, no pre-change distribution need be known: only the conditional mean bound \eqref{eq:null} is required, and the score is bounded by construction, so no tail assumption enters. \rev{Proposition~\ref{prop:valid} is a conditional statement: it does not say that the bound \eqref{eq:null} holds for the implemented surrogate, which is the subject of Section~3.6.} Second, $\log W_t$ is directly interpretable as accumulated evidence in nats, so an operator may act on a rising process before it crosses the threshold without invalidating anything -- the guarantee is uniform over stopping rules.
 
-\subsection{Pricing surrogate misspecification}
+\subsection{Pricing surrogate misspecification and calibrating the allowance}\label{sec:calib}
 
-Real EOV laws are never captured exactly. Thermal lag, vertical temperature gradients and imperfect load proxies leave a residual bias, so that \eqref{eq:null} holds only up to some $\delta\ge0$.
+Real EOV laws are never captured exactly. Thermal lag, vertical temperature gradients and imperfect load proxies leave a residual bias, so that \eqref{eq:null} holds only up to some $\delta\ge0$. \rev{Write $m_t=\E[X_t\mid\F_{t-1}]-\mu_0$ for the conditional mean excess of the score, an $\F_{t-1}$-measurable quantity, and let $\hat\delta\ge0$ be an allowance that is fixed at the end of commissioning ($\F_{t_0}$-measurable). Define the discounted component wealth $\widetilde W^\lambda_t=\prod_{s=t_0+1}^{t}\frac{1+\lambda(X_s-\mu_0)}{1+\lambda\hat\delta}$ and the mixture $\widetilde W_t=|\Lambda|^{-1}\sum_{\lambda\in\Lambda}\widetilde W^\lambda_t$.}
 
-\begin{proposition}[Bias discount]\label{prop:delta}
-Suppose $\E[X_t\mid\F_{t-1}]\le\mu_0+\delta$ for all $t$. Then
-$\widetilde W^\lambda_t = W^\lambda_t/(1+\lambda\delta)^{t-t_0}$
-is a non-negative supermartingale, and the alarm rule \eqref{eq:alarm} applied to the mixture of $\widetilde W^\lambda$ satisfies $\mathrm{FWFA}\le\alpha$.
+\begin{proposition}[Bias discount and its calibration]\label{prop:delta}
+\begin{revblock}
+\noindent(i) \emph{Known allowance.} If $m_t\le\delta$ for all $t>t_0$ and $\hat\delta=\delta$ is deterministic, $\widetilde W^\lambda$ and $\widetilde W$ are non-negative supermartingales and $\Prob(\exists t:\widetilde W_t\ge1/\alpha)\le\alpha$.
+
+\noindent(ii) \emph{Estimated allowance.} For any $\F_{t_0}$-measurable $\hat\delta$, let $\sigma=\inf\{t>t_0:m_t>\hat\delta\}$ be the first epoch at which the allowance is too small. Then
+\[
+\Prob(\exists t:\widetilde W_t\ge1/\alpha)\ \le\ \alpha+\Prob(\sigma<\infty).
+\]
+The second term is the calibration-failure probability and belongs in the total error budget.
+
+\noindent(iii) \emph{A finite-sample certified allowance.} Let $C$ be the $n$ epochs of the second half of commissioning, whose scores are sequential plug-in scores. Assume \emph{representativeness}: $\sup_{t>t_0}m_t\le\bar m_C:=n^{-1}\sum_{s\in C}m_s$ almost surely, that is, the future conditional excess never exceeds its average over commissioning. For $\varepsilon\in(0,1)$ put $\hat\delta_\varepsilon=\big(\bar X_C-\mu_0+\sqrt{\log(1/\varepsilon)/(2n)}\big)^{+}$. Then $\Prob(\sigma<\infty)\le\varepsilon$, so the alarm rule with threshold $1/(\alpha-\varepsilon)$ and allowance $\hat\delta_\varepsilon$ has $\mathrm{FWFA}\le\alpha$, whatever the dependence between epochs.
+\end{revblock}
 \end{proposition}
 
-PHASE estimates $\delta$ from the second half of the commissioning window as an upper confidence limit on the excess score, $\hat\delta=(\bar X-\mu_0+2\,\widehat{\mathrm{se}})^{+}$, and discounts the evidence at $\log(1+\lambda\hat\delta)$ nats per epoch. This converts model quality into a currency: a surrogate that leaves half the bias buys back half the discount, and the mechanism gives a precise sense in which better physics is worth more than better statistics.
+\begin{revblock}
+Proposition~\ref{prop:delta} separates three statements that are easily conflated. Part~(i) is the conditional theorem: validity given a uniform bound on the conditional excess. Part~(ii) shows that a data-dependent allowance converts that theorem into a bound with an additional term, the probability that the allowance is ever too small. Part~(iii) shows what it takes to control that term: a concentration inequality for the commissioning average that does not need independence (Azuma--Hoeffding, since the scores lie in $[0,1]$ and are plug-in), and an assumption linking the future to the commissioning period. That assumption, representativeness, is exactly the requirement that commissioning spans the operating envelope, including the seasonal and operational variation that follows; no procedure can verify it from commissioning data alone, and Section~4.2.6 shows what happens when it fails.
 
-\subsection{Detection delay}
+\paragraph{What the implemented rule establishes.} PHASE as implemented estimates the allowance as $\hat\delta=(\bar X-\mu_0+2\,\widehat{\mathrm{se}})^{+}$ from the second half of the commissioning window, with $\widehat{\mathrm{se}}$ the sample standard error of the plug-in scores, and discounts the evidence at $\log(1+\lambda\hat\delta)$ nats per epoch. This is a calibration heuristic. The factor two corresponds to a one-sided error of about 2.3\% only if the scores were independent and the sample mean Gaussian, the standard error ignores serial dependence (the scores are positively autocorrelated, Section~4.2.2), the error is not subtracted from the alarm budget, and representativeness is untested. Proposition~\ref{prop:delta} therefore does \emph{not} establish that the implemented procedure has $\mathrm{FWFA}\le\alpha$. What it establishes is the conditional statement of part~(i) and the form that any calibration guarantee must take; whether the implemented rule meets the budget is an empirical question, answered for the simulated scenarios in Section~4.2.2 and for short commissioning windows in Section~4.2.6. To show the price of a provable statement we also evaluate PHASE-C, which uses part~(iii) with $\varepsilon=\alpha/2$ and the threshold $2/\alpha$; its guarantee is conditional on representativeness and nothing else.
+
+Throughout the paper, ``valid'' therefore means \emph{conditionally valid} when it refers to Propositions~\ref{prop:valid} and~\ref{prop:delta}, and ``calibrated'' or ``observed'' when it refers to the false-alarm frequencies of the implemented rule. Estimation uncertainty, serial dependence and later environmental variation enter the guarantee only through $\Prob(\sigma<\infty)$ and the representativeness assumption.
+\end{revblock}
+
+This converts model quality into a currency: a surrogate that leaves half the bias buys back half the discount, and the mechanism gives a precise sense in which better physics is worth more than better statistics.
+
+\subsection{Detection delay}\label{sec:delaybound}
 
 \begin{proposition}[Delay bound]\label{prop:delay}
-Suppose that after change point $t^\star$ the score satisfies $\E[\log(1+\lambda(X_t-\mu_0))\mid\F_{t-1}]\ge g(\lambda)>\log(1+\lambda\delta)$ for some $\lambda\in\Lambda$. Then the alarm time satisfies
+\begin{revblock}
+Fix $\lambda\in\Lambda$ and a change time $t^\star\ge t_0$. Let $L^\lambda_t=\log\widetilde W^\lambda_t$ be the log-wealth of the discounted component with bet $\lambda$, and suppose that for all $s>t^\star$, almost surely,
+\[
+\E\big[\log(1+\lambda(X_s-\mu_0))\mid\F_{s-1}\big]-\log(1+\lambda\hat\delta)\ \ge\ \gamma_\lambda\ >\ 0 .
+\]
+Let $b=\log(1/\alpha)+\log|\Lambda|$, let $B_\lambda=\max\{0,\log(1+\lambda(1-\mu_0))-\log(1+\lambda\hat\delta)\}$ bound the increments of $L^\lambda$ from above, and write $x^-=\max(-x,0)$. Then the alarm time $\tau$ of the mixture rule satisfies
 \begin{equation}
-\E[\tau-t^\star]\ \le\ \frac{\log(1/\alpha)+\log|\Lambda|+B+(\log W_{t^\star})^{-}}{g(\lambda)-\log(1+\lambda\delta)},
+\E\big[(\tau-t^\star)^{+}\mid\F_{t^\star}\big]\ \le\ \frac{b+B_\lambda+\big(L^\lambda_{t^\star}\big)^{-}}{\gamma_\lambda}.
 \label{eq:delay}
 \end{equation}
-where $B$ bounds the increment overshoot.
+If the drift condition holds for several $\lambda$, the bound holds for each and the smallest may be taken.
+\end{revblock}
 \end{proposition}
 
-The bound has the expected shape: delay grows logarithmically in $1/\alpha$ and inversely in the evidence growth rate, and the bias discount subtracts directly from that rate. Restricting the alternative to the cone raises $g(\lambda)$ by removing the noise that an omnibus statistic must accumulate over all directions, which is why the cone ablation in Section~4 loses so much power.
+\begin{revblock}
+The bound has the expected shape: delay grows logarithmically in $1/\alpha$ and in the size of the bet grid, and inversely in the evidence growth rate $\gamma_\lambda$, from which the bias discount subtracts directly ($\gamma_\lambda=g(\lambda)-\log(1+\lambda\hat\delta)$ when $g(\lambda)$ lower-bounds the undiscounted log-growth). Two points deserve emphasis. The drift condition concerns one component, so the starting-wealth penalty must use that component's own log-wealth $L^\lambda_{t^\star}$, not the total mixture wealth; the two can differ greatly, because after a long healthy period the components with large bets have lost most of their wealth while the mixture is carried by components with small bets. And the penalty $(L^\lambda_{t^\star})^-$ is the quantitative form of ``evidence lost during a long healthy period'': it enters the delay one-for-one at rate $1/\gamma_\lambda$. Section~4.2.7 tests this with late damage onset, and compares the bound with realised delays.
+\end{revblock}
+Restricting the alternative to the cone raises $g(\lambda)$ by removing the noise that an omnibus statistic must accumulate over all directions, which is why the cone ablation in Section~4 loses so much power.
 
 \subsection{Identifiability-aware adaptation}
 
@@ -275,13 +359,13 @@ that is, the identifiable damage-consistent component is withheld from adaptatio
 
 \subsection{Localisation and multiple zones}
 
-The generator attaining the maximum in \eqref{eq:score} carries a support over substructures. Accumulating $L_j \mathrel{+}= \mathrm{supp}_j(v_{k^\star})\,(X_t-\mu_0)^{+}$ over the monitoring period yields a localisation index whose argmax names the implicated substructure. For structures partitioned into zones, a separate e-process per zone can be run and the zone-level processes merged by averaging, which is valid under arbitrary dependence \citep{vovk2021evalues}; if zone-level claims are wanted, e-values support false discovery rate control directly \citep{wang2022fdr}, avoiding the conservatism of a Bonferroni correction across zones.
+The generator attaining the maximum in \eqref{eq:score} carries a support over substructures. Accumulating $L_j \mathrel{+}= \mathrm{supp}_j(v_{k^\star})\,(X_t-\mu_0)^{+}$ over the monitoring period yields a localisation index whose argmax names the implicated substructure. \rev{The index is a heuristic accumulator, not a calibrated estimator, and carries no error guarantee of its own.} For structures partitioned into zones, a separate e-process per zone can be run and the zone-level processes merged by averaging, which is valid under arbitrary dependence \citep{vovk2021evalues}; if zone-level claims are wanted, e-values support false discovery rate control directly \citep{wang2022fdr}, avoiding the conservatism of a Bonferroni correction across zones.
 
 \begin{algorithm}[t]
 \caption{PHASE monitoring cycle (one epoch)}
 \begin{algorithmic}[1]
 \State \textbf{Design time:} $S,\kappa,\eta$ from the twin; generators $V,\tilde V$; projector $P_\perp$; $\mu_0$ by Monte Carlo
-\State \textbf{Commissioning:} fit $\hat\beta$; estimate $D$; estimate $\hat\delta$ on held-out commissioning epochs
+\State \textbf{Commissioning:} fit $\hat\beta$; estimate $D$; estimate $\hat\delta$ on \rev{the second half of the commissioning epochs, scored by the sequential plug-in rule}
 \For{$t>t_0$}
   \State $r_t \gets D^{-1}(y_t-g_{\hat\beta_{t-1}}(z_t))$ \Comment{sequential plug-in}
   \State $u_t\gets\max_k\langle v_k,r_t\rangle$; \ $X_t\gets\min(u_t^{+}/c,1)$
@@ -292,7 +376,7 @@ The generator attaining the maximum in \eqref{eq:score} carries a support over s
 \end{algorithmic}
 \end{algorithm}
 
-\section{Simulation study}
+\section{Simulation study}\label{sec:sim}
 
 \subsection{Experimental design}
 
@@ -308,29 +392,67 @@ The test structure, drawn in Figure~\ref{fig:frame}, is an eight-storey shear fr
 \label{fig:frame}
 \end{figure}
 
-Environmental forcing follows a northern-Vietnam monsoon calendar: an annual temperature cycle of $24\pm7^\circ$C, a diurnal cycle of amplitude $4^\circ$C, and autocorrelated weather noise, giving an ambient range of roughly $10$--$39^\circ$C. Three features are deliberately \emph{not} available to the monitor. Storey temperatures follow ambient through first-order thermal lags with storey-dependent time constants and a vertical gradient spanning $\pm15\%$; the live load acts on floors 2--7 with an occupancy and weekday cycle and is observed only through a proxy with 10\% multiplicative error; and modal identification noise is Student-$t$ with five degrees of freedom, scaled to 0.60--1.20\% relative standard deviation across modes. The monitor sees only single-sensor ambient temperature and the load proxy, so its surrogate is misspecified in exactly the way field surrogates are.
+Environmental forcing follows a northern-Vietnam monsoon calendar: an annual temperature cycle of $24\pm7^\circ$C, a diurnal cycle of amplitude $4^\circ$C, and autocorrelated weather noise, giving an ambient range of roughly $10$--$39^\circ$C. Three features are deliberately \emph{not} available to the monitor. Storey temperatures follow ambient through first-order thermal lags with storey-dependent time constants and a vertical gradient spanning $\pm15\%$; the live load acts on floors 2--7 with an occupancy and weekday cycle and is observed only through a proxy with 10\% multiplicative error; and modal identification noise is Student-$t$ with five degrees of freedom, scaled to 0.60--1.20\% relative standard deviation across modes. The monitor sees only single-sensor ambient temperature and the load proxy, so its surrogate is misspecified in exactly the way field surrogates are. \rev{All settings of the generator, the monitors and the comparators are listed in Appendix~B.}
 
 Modulus depends on temperature with $\beta_T=2.5\times10^{-3}$\,$^\circ$C$^{-1}$. Frequencies are computed exactly by solving the generalised eigenproblem at each epoch, not by the perturbation formula used by the monitor, so the first-order model is genuinely approximate from the monitor's point of view.
 
 \subsubsection{Scenarios}
 
-Seven scenarios are simulated, each with damage onset at epoch 1{,}825 (year 1.25) where applicable: abrupt stiffness loss of 2\%, 5\% and 10\% at storey 3; a gradual loss reaching 6\% at storey 3 over 60 days; abrupt 5\% loss at storeys 1 and 6, chosen for their contrasting identifiable fractions; a benign 3\% \emph{stiffening} of all storeys, representing temporary propping during façade works, which must not trigger a damage alarm; and undamaged records. Undamaged records are also simulated over four years to test behaviour beyond a calibration horizon.
+Seven non-healthy scenarios are simulated, each with onset at epoch 1{,}825 (year 1.25): abrupt stiffness loss of 2\%, 5\% and 10\% at storey~3; a gradual loss reaching 6\% at storey~3 over 60 days; abrupt 5\% loss at storeys 1 and 6, chosen for their contrasting identifiable fractions; and a benign 3\% \emph{stiffening} of all storeys, representing temporary propping during façade works, which must not trigger a damage alarm. Undamaged records are simulated over two years and over four years to test behaviour beyond a calibration horizon. \rev{Two further groups were added to answer questions about commissioning and onset time: a finer sweep of the commissioning window, and records of four years with damage onset late, at epoch 4{,}745 (year 3.25), after two years of healthy monitoring.}
 
-\subsubsection{Comparators}
+\subsubsection{Comparators}\label{sec:comparators}
 
-All comparators consume the same residual stream where possible, so that differences reflect the decision rule rather than the features. \textbf{PHASE} is the full method. \textbf{PHASE (no discount)} omits Proposition~\ref{prop:delta}. \textbf{PHASE-$\Omega$} replaces the cone score with the omnibus norm $\|r_t\|$, retaining all other machinery. \textbf{PHASE-BB} replaces the physics-structured surrogate with the unconstrained per-mode regression. \textbf{PHASE-E} additionally suspends betting when covariates fall outside the commissioning envelope.
+All comparators consume the same residual stream where possible, so that differences reflect the decision rule rather than the features. \rev{Variant labels are used identically in text, tables and figures. \textbf{PHASE} is the full method with the commissioning-estimated allowance $\hat\delta$ of Section~3.6. \textbf{PHASE-ND} omits the allowance ($\hat\delta=0$; ``no discount''). \textbf{PHASE-C} uses the finite-sample certified allowance of Proposition~\ref{prop:delta}(iii) with $\varepsilon=\alpha/2$ and the alarm threshold $2/\alpha$. \textbf{PHASE-$\Omega$} replaces the cone score with the omnibus norm $\|r_t\|$, retaining all other machinery. \textbf{PHASE-BB} replaces the physics-structured surrogate with the unconstrained per-mode regression. \textbf{PHASE-E} additionally suspends betting when covariates fall outside the commissioning envelope.}
 
-Four comparators represent current SHM practice. The \textbf{$3\sigma$ chart} alarms when any $|r_{it}|>3$. The \textbf{calibrated chart} uses a threshold set at the 99th percentile of the healthy maximum over a one-year monitoring horizon, obtained from 150 independent healthy simulations. The \textbf{Mahalanobis novelty index} is the classical outlier statistic $\sqrt{r_t^\top\hat\Sigma^{-1}r_t}$ with a threshold calibrated the same way rather than taken from a $\chi^2$ table. The \textbf{PCA-EOV chart} implements the standard data-normalisation strategy directly: the leading two principal components of the commissioning log-frequency matrix, which are dominated by environmental response, are projected out and the norm in the retained subspace is charted, again with a simulation-calibrated threshold. The \textbf{repeated $T^2$ test} applies a $\chi^2_m$ test at the 1\% level every epoch.
+Four comparators represent current SHM practice. The \textbf{$3\sigma$ chart} alarms when any $|r_{it}|>3$. The \textbf{calibrated chart} uses a threshold set at the 99th percentile of the healthy maximum over a one-year monitoring horizon, obtained from 150 independent healthy simulations. The \textbf{Mahalanobis novelty index} is the classical outlier statistic $\sqrt{r_t^\top\hat\Sigma^{-1}r_t}$ with a threshold calibrated the same way rather than taken from a $\chi^2$ table. The \textbf{PCA-EOV chart} implements one standard data-normalisation strategy directly: the leading two principal components of the commissioning log-frequency matrix, which are dominated by environmental response, are projected out and the norm in the retained subspace is charted, again with a simulation-calibrated threshold. The \textbf{repeated $T^2$ test} applies a $\chi^2_m$ test at the 1\% level every epoch. \rev{These are single, simple implementations, not the best that tuned compensation can achieve.}
 
 Three comparators represent classical sequential detection, all applied to the same cone score and all with thresholds calibrated to a one-year horizon on 150 healthy simulations: \textbf{CUSUM}, the \textbf{Shiryaev--Roberts} procedure, and an \textbf{EWMA} chart. These are oracles in a strong sense, since they require 150 replicated realisations of the true healthy process, which no real deployment possesses.
 
-Finally, the \textbf{conformal test martingale} is an anytime-valid comparator that obtains its guarantee differently from PHASE. Cone scores from the commissioning window serve as a calibration set; each monitoring epoch yields a smoothed conformal $p$-value, and a mixture of power martingales $\int_0^1\prod_s \epsilon p_s^{\epsilon-1}\,\mathrm{d}\epsilon$ accumulates evidence, with the same Ville alarm at $1/\alpha$ \citep{vovk2021testing}. It uses the identical score and the identical alarm rule, so the comparison isolates one question: whether validity should rest on exchangeability of the calibration sample or, as in PHASE, on a conditional mean bound with an explicit misspecification discount.
+\begin{revblock}
+Finally, two \textbf{conformal test martingales} are anytime-valid comparators that obtain their guarantee differently from PHASE. Cone scores from a \emph{fixed} calibration set serve as the reference; each monitoring epoch yields a smoothed conformal $p$-value $p_t$ (the rank of $X_t$ among the calibration scores, ties broken at random), and a mixture of power martingales $\int_0^1\prod_s \epsilon p_s^{\epsilon-1}\,\mathrm{d}\epsilon$, approximated on a grid of twelve values of $\epsilon$ in $[0.05,0.95]$, accumulates evidence with the same Ville alarm at $1/\alpha$ \citep{vovk2021testing}. The first (\textbf{CTM}) uses the second half of the commissioning window as the calibration set, as PHASE does for $\hat\delta$; the second (\textbf{CTM-F}) uses scores from the whole commissioning window, which spans a full seasonal cycle. Both use the identical score and alarm rule, so the comparison isolates one question: whether validity should rest on exchangeability of the calibration sample or, as in PHASE, on a conditional mean bound with an explicit misspecification discount.
 
-\subsubsection{Metrics}
+The validity of these comparators rests on a specific assumption, which we state because it determines when their guarantee should be expected to hold. The $p_t$ are uniform and independent, and the product is a test martingale, if the monitoring scores are exchangeable with the calibration scores and the calibration set is treated as fixed. The intended reference condition is therefore that the healthy structure's score sequence is stationary and free of serial dependence, so that commissioning and monitoring scores come from one distribution. The simulated healthy structure does not meet that condition in two ways that real structures also fail: the scores are serially dependent (thermal lag and weather persistence; Section~4.2.2 reports their autocorrelation), and the surrogate that generates them keeps adapting. A failure of the guarantee for these comparators is therefore a failure of their stated null in this setting and not an error in Ville's inequality.
+\end{revblock}
 
-We report the family-wise false-alarm probability \eqref{eq:fwfa} over one- and three-year monitoring horizons; detection rate and detection delay after onset; pre-onset false alarms in damage scenarios; and localisation accuracy. All rates are reported with standard errors. In total 2{,}700 records were simulated: 150 for threshold calibration, 300 healthy over two years, 300 healthy over four years, 150 per damage scenario, and 800 across the commissioning sweep.
+\subsubsection{Metrics and accounting}\label{sec:metrics}
 
-\subsection{Results}
+We report the family-wise false-alarm probability \eqref{eq:fwfa} over one- and three-year monitoring horizons; detection rate and detection delay after onset; pre-onset false alarms in damage scenarios; and localisation accuracy. \rev{Rates are reported as counts with exact (Clopper--Pearson) 95\% confidence intervals, which are informative even when no event is observed: zero events in $n$ records give an upper limit of $1-0.025^{1/n}$, that is 1.2\% for $n=300$ and 0.6\% for $n=600$.} \rev{These intervals describe sampling variability across simulated structures drawn from one generator; they are not statements about other generators or about real structures.}
+
+\begin{revblock}
+The remaining quantities are defined as follows, because the treatment of records that never alarm, or that alarm too early, changes the numbers.
+\begin{itemize}
+\item \emph{Pre-onset alarm.} An alarm at an epoch before damage onset. Such a record is a false alarm in the damage scenario; it is counted in the false-alarm column and is \emph{not} counted as a detection. Where the number of such records is non-zero it is stated.
+\item \emph{Detection and detection rate.} A record is detected if its first alarm falls at or after onset and within the remaining nine months of the record (1{,}095 epochs after onset, 4$\times$274 days). The detection rate is the number of detected records divided by all records of the scenario.
+\item \emph{Undetected record.} No alarm in the whole record. Undetected records are right-censored at the end of the monitoring window.
+\item \emph{Detection delay.} Days from onset to first alarm. Medians and interquartile ranges (IQR) are computed \emph{among detected records only}, so they are conditional on detection; when the detection rate is below one half the unconditional median is undefined (the median record is censored). A conditional median should be read together with the detection rate.
+\item \emph{Localisation.} The localisation index is read at the PHASE alarm epoch. Accuracy is the fraction of \emph{detected} records in which the index names the damaged storey; its denominator is the number of detected records, stated beside the percentage.
+\end{itemize}
+
+Table~\ref{tab:accounting} gives the accounting of the simulated records. The submitted version stated a total of 2{,}700; the correct total for the groups described there was 2{,}600, and the revision adds a finer commissioning sweep and a late-onset experiment.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Accounting of simulated records. All records use independent seeds. Two-year records have 2{,}920 epochs; four-year records 5{,}840.}
+\label{tab:accounting}
+\begin{tabular}{p{3.0cm}p{9.6cm}r}
+\toprule
+Group & Purpose & Records \\
+\midrule
+Calibration & healthy, two-year; thresholds of calibrated chart, CUSUM and other comparators & 150 \\
+Healthy, two-year & Table~\ref{tab:fwer} one-year horizon; Table~\ref{tab:delay} reference & 300 \\
+Healthy, four-year & Table~\ref{tab:fwer} three-year horizon & 300 \\
+Damage scenarios & seven scenarios $\times$ 150, two-year (Table~\ref{tab:delay}) & 1{,}050 \\
+Commissioning sweep & seven window lengths $\times$ (100 healthy + 100 damaged), two-year (Table~\ref{tab:burn}); four of the seven as submitted & 1{,}400 \\
+Late onset & four scenarios $\times$ 100, four-year (Table~\ref{tab:late}) & 400 \\
+\midrule
+Total & 2{,}900 two-year and 700 four-year records & 3{,}600 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{revblock}
+
+\subsection{Results}\label{sec:sim-results}
 
 \subsubsection{Validity of the first-order physics}
 
@@ -352,7 +474,7 @@ Stiffness loss & Storey 1 & Storey 3 & Storey 6 \\
 \end{tabular}
 \end{table}
 
-\subsubsection{False-alarm control under continuous monitoring}
+\subsubsection{False-alarm control under continuous monitoring}\label{sec:res-fa}
 
 Table~\ref{tab:fwer} reports the probability that each monitor ever alarms on an undamaged structure. The $3\sigma$ chart and the repeated $T^2$ test alarmed in every record, at median elapsed times of 2.0 and 3.5 days respectively. This is the expected consequence of applying a fixed-sample rule 1{,}460 times, and it is the behaviour that drives alarm fatigue in deployed systems.
 
@@ -403,7 +525,7 @@ The value of the bias discount is visible in the same table. Without it, PHASE's
 \label{fig:fwer}
 \end{figure}
 
-\subsubsection{Detection delay, localisation, and the cost of validity}
+\subsubsection{Detection delay, localisation, and the cost of validity}\label{sec:res-delay}
 
 Table~\ref{tab:delay} reports detection performance. PHASE detected 5\% stiffness loss at storey 3 in every record with a median delay of 235 epochs (59 days, interquartile range 51--69 days), and 10\% loss with a median delay of 26 days. At 2\% loss -- a signature amounting to roughly 0.2\% frequency change against 0.6--1.2\% identification scatter -- detection within the remaining nine months occurred in 34\% of records. Gradual degradation reaching 6\% over 60 days was detected in every record, with a median delay of 80 days from onset of degradation.
 
@@ -455,13 +577,13 @@ The horizon-calibrated chart illustrates the opposite failure. Its threshold had
 \label{fig:records}
 \end{figure}
 
-\subsubsection{Discriminating benign change: the value of the damage cone}
+\subsubsection{Discriminating benign change: the value of the damage cone}\label{sec:res-cone}
 
 The clearest single result concerns the stiffening scenario, in which temporary propping raises all storey stiffnesses by 3\%. This is a real change in the structure, and any omnibus change detector should and does find it: PHASE-$\Omega$ alarmed in all 150 records, at a median of 11 days. PHASE alarmed in none, because the change lies outside the damage cone -- frequencies rose, and stiffness loss cannot raise frequencies. The oracle CUSUM, which in our implementation consumes the same cone score, also correctly stayed silent, which underlines that the discriminating ingredient is the physics-derived restriction of the alternative and not the sequential machinery.
 
 The cone contributes power as well as specificity. Removing it while holding everything else fixed reduced the detection rate for 5\% damage from 1.00 to 0.29 and roughly tripled the median delay (Table~\ref{tab:delay}). An omnibus statistic must accumulate noise over all $m$ directions; the cone restricts attention to the ones damage can actually produce.
 
-\subsubsection{The detectability map: what physics can and cannot promise}
+\subsubsection{The detectability map: what physics can and cannot promise}\label{sec:res-detect}
 
 Figure~\ref{fig:detect} shows the identifiable fraction \eqref{eq:retention} for each storey. It ranges from 0.245 at storey 1 to 0.588 at storey 6: between 41\% and 76\% of each storey's modal signature is confounded with the nuisance directions and is unavailable for inference, however long one monitors.
 
@@ -476,7 +598,7 @@ Localisation, by contrast, follows the map exactly. Damage at storeys 3 and 6 wa
 \label{fig:detect}
 \end{figure}
 
-\subsubsection{Commissioning window: a structural prerequisite}
+\subsubsection{Commissioning window: a structural prerequisite}\label{sec:res-comm}
 
 Table~\ref{tab:burn} reports a sweep over commissioning length. The results are unforgiving. With 30 or 60 days of commissioning the monitor is invalid: false-alarm probabilities of 0.24 and 0.25 for PHASE, and 0.73 and 0.63 for the black-box variant. The mechanism is extrapolation. The bias discount $\hat\delta$ measures misspecification inside the observed covariate envelope, and a monitor commissioned in one season spends the rest of the year outside it. At 120 days validity returns (0.01) but detection collapses to zero, because the enlarged $\hat\delta$ consumes all the evidence a 5\% signal can generate. Only with a full seasonal cycle do validity and power coexist.
 
@@ -510,7 +632,7 @@ Notably, once a full seasonal cycle is available, the black-box surrogate matche
 \label{fig:comm}
 \end{figure}
 
-\subsubsection{Operational and environmental translation}
+\subsubsection{Operational and environmental translation}\label{sec:res-oper}
 
 The guarantee in Proposition~\ref{prop:valid} converts into an unusually clean operational statement. It is not a rate per epoch or per year but a bound over the monitoring life: across a fleet of instrumented structures, at most a proportion $\alpha$ will ever raise a false alarm, however long they are monitored. At $\alpha=0.01$, a portfolio of 500 monitored buildings expects at most five spurious inspection triggers in total, not per year.
 
@@ -537,7 +659,7 @@ tCO\textsubscript{2}e/yr at 400\,kg per mobilisation & 36{,}000 & 1.4 & 0.10 \\
 
 The comparison with the calibrated chart is the honest one, and it is not primarily about carbon: both raise few alarms, but the calibrated chart achieves this by being unable to detect damage at all in our experiments, whereas PHASE detects 5\% stiffness loss in every record within two months. The environmental case for anytime-valid monitoring rests less on avoided inspections than on preserving the detection capability that makes early, repair-scale intervention possible.
 
-\section{Application to the Z24 bridge}
+\section{Application to the Z24 bridge}\label{sec:z24}
 
 The simulation study above is controlled but synthetic. This section applies PHASE to real measurements from the Z24 progressive damage test, the canonical benchmark in vibration-based SHM \citep{peeters2001z24}, in which a three-span prestressed concrete highway overpass near Koppigen, Switzerland, was subjected to a documented sequence of structural interventions before demolition in 1998; the test programme is described in detail by \citet{reynders2009z24}.
 
@@ -573,13 +695,41 @@ Each record is divided into non-overlapping windows of 8{,}192 samples (81.9\,s)
 
 Figure~\ref{fig:bridge} shows the structure and the location of the intervention. Figure~\ref{fig:z24}(left) shows the resulting state means. The physics is clearly visible: all three frequencies fall monotonically through the settlement sequence, by 4.9\%, 1.3\% and 4.0\% respectively at 95\,mm, and all three recover when the settlement is reversed.
 
-\subsection{What this dataset can and cannot test}
+\subsection{What this dataset can and cannot test}\label{sec:z24-scope}
 
 Two features of the released data constrain what may be concluded, and we state them before reporting results. First, no environmental covariate accompanies the ambient-vibration files, so the physics-structured surrogate of Section~3.3 degenerates to a predictable running intercept and the identifiability analysis cannot be exercised; correspondingly, the damage cone is instantiated at its coarsest physically justified level, namely that stiffness loss cannot raise a natural frequency, so the admissible set is the non-positive orthant in standardised log-frequency space. Localisation is not attempted, as no calibrated finite element model of the bridge is available to us.
 
-Second, and more consequentially, each state was measured on a different day. The two undamaged reference measurements, taken five days apart, differ by 0.9\%, 1.4\% and 0.3\% in the three tracked modes, which is two to four times the within-state scatter. Test-day effects are therefore of the same order as the damage signatures, and no monitor can attribute a change to damage rather than to environment without a covariate. Because epochs within a state are exchangeable, all results below are reported over 200 random orderings of the epochs within each block, giving Monte Carlo standard errors on alarm rates.
+Second, and more consequentially, each state was measured on a different day. The two undamaged reference measurements, taken five days apart, differ by 0.9\%, 1.4\% and 0.3\% in the three tracked modes, which is two to four times the within-state scatter. Test-day effects are therefore of the same order as the damage signatures, and no monitor can attribute a change to damage rather than to environment without a covariate. \begin{revblock}
+The main results below treat the epochs within a state as exchangeable and are reported over 200 random orderings of the epochs within each block. That is an assumption, and we check it rather than assume it. For the ambient records, the median lag-one autocorrelation of the tracked log-frequencies within a state is $0.02$, and only 1 of the 30 state-by-mode series is significant at the 5\% level (3\%, close to chance); a trend test is significant for 13\% and a test for a set-up effect for 7\%. For the forced records the median lag-one autocorrelation is $0.36$ and 70\% of the series are significant, so exchangeability within a forced state is not supported. Section~\ref{sec:z24-results} therefore also reports re-analyses that keep the recorded order (chronological, reversed), a random circular shift of the recorded order, and shuffles of whole measurement set-ups with the order inside each set-up preserved. The 200 orderings are a resampling device for this one dataset: the reported standard errors are Monte Carlo errors over orderings, a rate of 0 or 1 means the outcome does not depend on the ordering, and none of it quantifies uncertainty about other bridges or independent monitoring campaigns, of which there is one.
 
-\subsection{Results}
+\paragraph{Which components the Z24 data validate.} Table~\ref{tab:components} lists which parts of PHASE are exercised by the simulation, by Z24, or by both.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Evidence for each component of PHASE. ``Reduced'' means that the component is run in a simplified form because the Z24 release contains no environmental covariates and no calibrated structural model.}
+\label{tab:components}
+\begin{tabular}{p{4.4cm}p{4.6cm}p{5.4cm}}
+\toprule
+Component & Simulation (Section~\ref{sec:sim}) & Z24 (this section) \\
+\midrule
+Physics-structured surrogate with tied temperature response & Yes; compared with the black-box surrogate & No: reduced to a running intercept \\
+Damage cone (sign restriction) & Yes; cone-free ablation PHASE-$\Omega$, benign stiffening & Reduced: non-positive orthant; directional discrimination on the recovery state \\
+Nuisance subspace, identifiable fraction, localisation & Yes; localisation correct at storeys 3 and 6, failed at storey~1 & No: cannot be exercised; localisation not attempted \\
+Identifiability-aware adaptation & Used in every run; no separate ablation reported & Reduced: filtered intercept update with the orthant cone \\
+Betting e-process with allowance $\hat\delta$ & Yes; no-allowance and certified variants & Yes, with $\hat\delta$ from the commissioning data \\
+Commissioning window and envelope & Yes; sweep of window length & Yes; depends on how commissioning data are ordered \\
+Separation of damage from environment & Yes, for a generator with unmodelled effects & No; the data cannot test it \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{revblock}
+
+\begin{revblock}
+\paragraph{Is the sign restriction appropriate for settlement, tilt and spalling?} The cone is derived for stiffness loss at fixed mass, and the Z24 interventions are pier settlement, foundation tilt and concrete spalling, which alter support conditions, load paths and cross-section as well as stiffness. The sign restriction is a modelling assumption, and for these interventions it is supported by the data only a posteriori. Relative to the pooled reference states, the three tracked frequencies fell in every damage state of both modalities from 80\,mm settlement onwards: by up to 5.5\%, 2.3\% and 4.0\% at 95\,mm, by 1.0--1.3\%, 1.2--1.9\% and 3.4--3.7\% under foundation tilt, and by 0.5--0.8\%, 0.8--1.2\% and 1.5--2.1\% under spalling. Only the third mode in the two smallest settlement states rose, by at most 0.6\%, comparable to the day-to-day offset. That agrees with the physical expectation that settlement and tilt release restraint and that spalling removes section stiffness faster than mass, but it does not justify the assumption in general. Mechanisms that can \emph{raise} some tracked frequencies, such as mass loss, crack closure under prestress or temperature, or boundary stiffening, lie outside the cone, and a net frequency increase caused by damage would not be flagged as damage. As implemented, the score is the maximum over singleton, pair and all-mode generators, so a pattern in which some frequencies fall and others rise still scores on the falling ones; it is only the rising components that are discarded. Two mitigations follow. The cone can be enlarged with generators for known mass-change mechanisms, at the cost of power. And an omnibus process (PHASE-$\Omega$ here) can run alongside as a separate \emph{change notification} channel with its own share of the budget, so that a frequency rise prompts engineering review without being reported as damage.
+\end{revblock}
+
+\subsection{Results}\label{sec:z24-results}
 
 Table~\ref{tab:z24} reports six experiments.
 
@@ -587,11 +737,11 @@ Table~\ref{tab:z24} reports six experiments.
 \centering
 \scriptsize
 \setlength{\tabcolsep}{2.6pt}
-\caption{Z24 bridge: alarm rate over 200 random epoch orderings; median alarm epoch in parentheses for R2, where timing distinguishes the methods. Nominal level $\alpha=0.01$; standard errors at most 0.035. PH-$\Omega$ is the cone-free ablation, CTM the conformal test martingale, MSD the Mahalanobis novelty index. EWMA and Shiryaev--Roberts, omitted for space, behave like CUSUM. Without replicate healthy campaigns, all thresholds here are calibrated on the commissioning window alone, as a practitioner would have to do.}
+\caption{Z24 bridge: alarm rate over 200 random epoch orderings; median alarm epoch in parentheses for R2, where timing distinguishes the methods. Nominal level $\alpha=0.01$; \rev{Monte Carlo standard errors over orderings, at most 0.035 (these describe the resampling of one dataset, not independent campaigns)}. PHASE-$\Omega$ is the cone-free ablation, CTM the conformal test martingale, MSD the Mahalanobis novelty index. EWMA and Shiryaev--Roberts, omitted for space, behave like CUSUM. Without replicate healthy campaigns, all thresholds here are calibrated on the commissioning window alone, as a practitioner would have to do.}
 \label{tab:z24}
 \begin{tabular}{llcccccccc}
 \toprule
-& Commissioning $\to$ monitored state & PHASE & PH-$\Omega$ & CTM & CUSUM & 3$\sigma$ & $\chi^2$ & PCA & MSD \\
+& Commissioning $\to$ monitored state & PHASE & PHASE-$\Omega$ & CTM & CUSUM & 3$\sigma$ & $\chi^2$ & PCA & MSD \\
 \midrule
 \multicolumn{10}{l}{\textit{ambient vibration (690 epochs)}}\\
 R1a & ref 1 $\to$ ref 2 (new day) & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 0.97 & 0.90 \\
@@ -625,33 +775,49 @@ R5  & ref 1+2 $\to$ reference 3 (new day) & 1.00 & 1.00 & 1.00 & 1.00 & 0.84 & 0
 \label{fig:z24}
 \end{figure}
 
-\subsection{What the real-data study adds}
+\subsection{What the real-data study adds}\label{sec:z24-adds}
 
 Three claims of the paper survive contact with real measurements. The commissioning-envelope requirement is confirmed, and confirmed as a failure mode of PHASE and not only of its competitors. The value of restricting the alternative to physically admissible directions is confirmed in the cleanest possible form, on a genuine structural change of known sign. And the evidence accumulated by the cone-restricted process crosses the alarm threshold earlier than that of the omnibus process on a real damage sequence. Both conclusions hold under ambient and forced excitation, so neither is an artefact of one excitation type. What the dataset cannot support, and what we therefore do not claim, is calibrated separation of damage from environmental variation: that would require a monitoring campaign with a synchronous covariate record, of which the Z24 long-term monitoring series and the KW51 campaign are the obvious candidates for future work.
 
-\section{Discussion and conclusions}
+\section{Discussion and conclusions}\label{sec:disc}
 
-\subsection{Implications for practice}
+\subsection{Implications for practice}\label{sec:practice}
 
-Three practical implications follow. First, alarm governance becomes a budget rather than a tuning exercise. An asset owner can state that at most 1\% of monitored structures will ever raise a false alarm and hold the monitoring system to that commitment, which is a specification that can be written into a contract. Because the guarantee is uniform over stopping rules, operators may also watch the evidence process continuously and act on a rising trajectory before the threshold is crossed, without the informal peeking that invalidates conventional tests.
+Three practical implications follow, each conditional on the assumptions stated.
 
-Second, the detectability map belongs in the design phase. It is computed from the finite element model and the expected identification scatter, before installation, and states which substructures a proposed sensor and mode configuration can support claims about. In our eight-storey frame, moving from four to six identified modes raised the identifiable fraction at storeys 1 and 8 from 0.034 and 0.064 to 0.245 and 0.349, converting effectively blind substructures into monitorable ones. This is a concrete, physics-derived criterion for instrumentation planning, and it integrates naturally with BIM-based asset models where the finite element model and sensor layout already coexist.
+\begin{revblock}
+First, alarm governance can become a budget rather than a tuning exercise, \emph{if} commissioning covers the operating envelope and the conditional-mean bound holds. Under those conditions an asset owner can state that at most 1\% of monitored structures will ever raise a first false alarm. That is a candidate specification for a performance agreement, but the present evidence does not support it as an unconditional contractual commitment. The calibration procedure has not been shown to enforce the conditions (Proposition~\ref{prop:delta}; Section~4.2.6); the variant with a provable calibration step (PHASE-C) pays a large price in power; and the guarantee covers the first alarm of one monitoring process, so an agreement would have to define the commissioning protocol, a coverage test, the restart rule and how the budget is spent across restarts (for example by giving the $k$-th restart a share $\alpha_k$ with $\sum_k\alpha_k\le\alpha$). Because the guarantee is uniform over stopping rules, operators may watch the evidence process continuously without invalidating the alarm. That does not extend the guarantee to action rules set below the alarm threshold: by Ville's inequality the probability that the evidence ever reaches a level $w$ is at most $1/w$ under the null, so an inspection policy triggered at $W_t\ge10$ is protected only at the level $0.1$, not $0.01$.
+\end{revblock}
 
-Third, the commissioning requirement should be treated as a design constraint rather than a nuisance. Our results indicate that a monitoring system commissioned over a single season is not merely less powerful but positively misleading. Where waiting a full year is unacceptable, the natural remedy is exactly the one this special issue is concerned with: use the calibrated digital twin to \emph{synthesise} the operational envelope, generating reference-condition modal responses across temperatures and load states that have not yet been observed, and calibrate $\hat\delta$ against simulated rather than measured excursions. This substitutes model risk for extrapolation risk, and quantifying that trade-off is a natural next step.
+Second, the detectability map belongs in the design phase. It is computed from the finite element model and the expected identification scatter, before installation, and states which substructures a proposed sensor and mode configuration can support claims about \rev{\emph{relative to the nuisance model assumed}}. In our eight-storey frame, moving from four to six identified modes raised the identifiable fraction at storeys 1 and 8 from 0.034 and 0.064 to 0.245 and 0.349, converting effectively blind substructures into monitorable ones. \rev{The map is not a localisation guarantee: storey~1 has a non-zero identifiable fraction and was nevertheless never localised correctly (Section~4.2.6), because localisation also needs the identifiable signatures of different storeys to be separable, and the map changes when the nuisance model changes (Table~\ref{tab:nuisance}).} This is a concrete, physics-derived criterion for instrumentation planning, and it integrates naturally with BIM-based asset models where the finite element model and sensor layout already coexist.
 
-\subsection{Sustainability implications}
+Third, the commissioning requirement should be treated as a design constraint rather than a nuisance. Our results indicate that a monitoring system commissioned over a single season is not merely less powerful but positively misleading. \rev{What is required is adequate coverage of the operating envelope; in the seasonal scenario simulated here a full calendar year was what achieved that, which is not a universal requirement. Section~6.2 sets out how coverage can be assessed in practice.} Where waiting a full year is unacceptable, the natural remedy is exactly the one this special issue is concerned with: use the calibrated digital twin to \emph{synthesise} the operational envelope, generating reference-condition modal responses across temperatures and load states that have not yet been observed, and calibrate $\hat\delta$ against simulated rather than measured excursions. This substitutes model risk for extrapolation risk, and quantifying that trade-off is a natural next step.
 
-The sustainability case for instrumented infrastructure rests on the claim that continuous monitoring enables condition-based intervention: repairs made early, at small scale, in place of replacement. That claim depends on alarms being both trusted and timely. Our results indicate that conventional practice can satisfy neither simultaneously -- naive charts alarm constantly, and charts calibrated to stop alarming stop detecting -- while an anytime-valid rule can. The relevant environmental benefit is therefore not primarily the avoided carbon of unnecessary inspections, real though that is, but the preservation of the embodied carbon in structures that are repaired rather than replaced because deterioration was detected while it was still small. Reviews of AI in the built environment tend to locate sustainability gains in energy optimisation and material efficiency \citep{bibri2025aidt}; the gain argued here is of a different kind, residing in the trustworthiness of the decisions a monitoring system supports. This connects to SDG 9 through resilient infrastructure, SDG 11 through the safe operation of the existing building stock, and SDG 13 through the emissions avoided by extending service life.
+\begin{revblock}
+\subsection{Deployment prerequisites and practical considerations}
 
-There is a further, less obvious implication for equity. The commissioning result implies that rigorous monitoring requires patience rather than expensive hardware, and the physics-informed surrogate delivers usable behaviour from many fewer parameters than a black-box alternative. Both features favour deployment in rapidly urbanising contexts where instrumentation budgets are constrained but the building stock is young and its deterioration curve has not yet been characterised.
+\paragraph{Prerequisites.} PHASE needs a digital twin with modal sensitivities, at least $\dim\mathcal N+1$ reliably identified modes (more for localisation), synchronous measurements of the covariates the nuisance model uses, an automated modal identification chain with quality control, and a commissioning period that is declared complete only when the coverage checks below pass.
 
-\subsection{Limitations}
+\paragraph{Judging commissioning coverage in advance.} Representativeness refers to the future, so it cannot be certified from commissioning data alone; the practical question is how to make the assumption checkable. We suggest, and have only partly tested, the following protocol. (i)~Declare the target envelope before commissioning from independent records, for example multi-year site climatology for temperature and the occupancy or traffic schedule for load, and measure the fraction of that envelope covered by the commissioning data. In the simulated sweep (Table~\ref{tab:burn}) validity returned only when coverage of the monitoring epochs was close to complete; at coverage around one half, the false-alarm probability was 0.24--0.25. (ii)~Estimate $\hat\delta$ separately on seasonal or operational blocks of commissioning data and treat a large spread as evidence that one block does not represent the others. (iii)~Report coverage online and flag, or gate, alarms issued outside the commissioning envelope. Gating by itself did not restore validity in our sweep (PHASE-E), so this is a diagnostic, not a remedy. (iv)~Treat the guarantee as inactive, and alarms as provisional, until declared coverage is reached; extend commissioning, as a restart with its own budget share, when a season or operating regime not yet seen occurs. (v)~Where the envelope cannot be observed, use the twin to synthesise it and state the model risk. None of these steps converts representativeness into a theorem; they make a failure visible earlier.
+
+\paragraph{Missing data and recalibration.} Skipping an epoch leaves the evidence process unchanged provided the decision to skip is made without looking at that epoch's score (sensor outage, a scheduled quality rejection based on the identification's own uncertainty); screening epochs by the size of their residual would bias the process and void the guarantee. Dropped or mismatched modes were not simulated. Any re-estimation of the scatter $D$, of $\mu_0$ or of $\hat\delta$, and any re-commissioning after maintenance or a retrofit, starts a new process and should consume a pre-allocated share of the budget; known changes outside the cone, such as stiffening retrofits, should trigger planned re-commissioning.
+
+\paragraph{Are the delays acceptable?} A median delay of 59 days for a 5\% loss at a single storey, and detection of only one record in three for a 2\% loss within nine months, are acceptable for slow deterioration but not for sudden events (impact, earthquake, scour), for which event-triggered inspection remains necessary. Whether a given delay is acceptable depends on the deterioration rate and on the consequence of delay for the structure, which the owner must judge; the delays reported here are the price of a 1\% lifetime budget and of the conservative allowance.
+\end{revblock}
+
+\subsection{Sustainability implications}\label{sec:sust}
+
+The sustainability case for instrumented infrastructure rests on the claim that continuous monitoring enables condition-based intervention: repairs made early, at small scale, in place of replacement. That claim depends on alarms being both trusted and timely. Our results indicate that the conventional charts \rev{implemented here} can satisfy neither simultaneously -- naive charts alarm constantly, and charts calibrated to stop alarming stop detecting -- while an anytime-valid rule \rev{can, in the simulated setting and conditionally on adequate commissioning}. The relevant environmental benefit \rev{would} therefore \rev{not be} primarily the avoided carbon of unnecessary inspections, real though that is, but the preservation of the embodied carbon in structures that are repaired rather than replaced because deterioration was detected while it was still small. \rev{That benefit is a hypothesis motivated by these results; this paper measures false-alarm and detection behaviour, not avoided replacements or avoided emissions.} Reviews of AI in the built environment tend to locate sustainability gains in energy optimisation and material efficiency \citep{bibri2025aidt}; the gain argued here is of a different kind, residing in the trustworthiness of the decisions a monitoring system supports. This connects to SDG 9 through resilient infrastructure, SDG 11 through the safe operation of the existing building stock, and SDG 13 through the emissions avoided by extending service life.
+
+There is a further, less obvious \rev{possible} implication for equity. The commissioning result \rev{suggests} that rigorous monitoring requires patience rather than \rev{only} expensive hardware, and the physics-informed surrogate delivers usable behaviour from many fewer parameters than a black-box alternative \rev{during short commissioning, although with a long commissioning window the black-box surrogate matched it}. Both features \rev{could} favour deployment in rapidly urbanising contexts where instrumentation budgets are constrained but the building stock is young and its deterioration curve has not yet been characterised. \rev{These are plausible motivations, not demonstrated outcomes: the study contains no cost data, and a year of commissioning with covariate sensing and a calibrated twin is not free.}
+
+\subsection{Limitations}\label{sec:limits}
 
 The controlled evidence here is simulation-based and the real-data study is limited in the ways set out in Section~5.2: three tracked modes, no covariate record, no localisation, and states measured on different days so that detection cannot be attributed to damage rather than environment. The generator was constructed to be adversarial in specific ways -- unmodelled thermal lag and gradients, heavy-tailed identification noise, an imperfect load proxy -- but a shear frame is a simple structure, real EOV includes effects we did not model such as humidity, wind and freeze--thaw stiffening, and real modal identification produces mode-mismatching and dropouts that we did not simulate. The Z24 progressive damage test exercises the directional and commissioning claims on real measurements but cannot exercise the identifiability analysis; a campaign with synchronous temperature, such as the Z24 long-term monitoring series or the KW51 retrofitting campaign, is the necessary next step.
 
 Several limitations are methodological. Only frequencies are used; mode shapes and their derivatives carry localisation information that the cone construction could exploit directly. The null \eqref{eq:null} is stated as a conditional mean bound and made true by the surrogate rather than assumed of the physics, which is honest but places weight on $\hat\delta$; that estimate is itself a two-standard-error bound from a finite commissioning sample, and our commissioning sweep shows exactly how it fails when the envelope is not covered. The detection delays reported are two to three times those of an oracle CUSUM, which is the price of the anytime guarantee, and for a structure monitored under a genuinely fixed horizon by an analyst who never peeks, the oracle procedure would be preferable. Finally, the localisation index is a heuristic accumulator rather than a calibrated estimator; giving localisation claims their own anytime-valid guarantee via e-value based false discovery rate control across zones is a clear extension.
 
-\subsection{Conclusions}
+\subsection{Conclusions}\label{sec:concl}
 
 Structural health monitoring systems make thousands of decisions per year using rules designed for one. This paper has shown that the resulting false-alarm probability is not a small correction -- a $3\sigma$ chart alarmed on every undamaged structure within days -- and that the usual remedy of raising thresholds trades the problem for a worse one, since a chart calibrated to control error over a monitoring year detected no 5\% damage at all in our experiments.
 
@@ -666,11 +832,73 @@ Two findings qualify the method and, we believe, matter more than the headline c
 
 \newpage
 \appendix
-\section*{Appendix: Proofs}
-\addcontentsline{toc}{section}{Appendix}
+\renewcommand{\thesection}{\Alph{section}}
+\setcounter{section}{0}
+
+\begin{revblock}
+\section{Notation and acronyms}\label{app:notation}
+
+\begin{singlespace}
+\small
+\begin{tabular}{@{}p{3.1cm}p{12.2cm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textit{Structure and physics}}\\
+$n,\ m$ & number of substructures (storeys) and of identified modes\\
+$K_j,\ M,\ \theta_j,\ \rho_j$ & substructure stiffness matrix, mass matrix, stiffness multiplier, stiffness loss $\rho_j=1-\theta_j\ge0$\\
+$\lambda_i,\ \omega_i,\ \phi_i$ & eigenvalue, circular frequency and mode shape of mode $i$\\
+$S,\ \kappa,\ \eta$ & sensitivity matrix of log-frequencies to stiffness loss (eq.~\ref{eq:sens}); response to uniform modulus change ($\kappa=S\mathbf 1$); response to added live-load mass\\
+$D,\ A=D^{-1}S$ & diagonal matrix of identification scatter; standardised sensitivity matrix\\
+$\Cone,\ \tilde d_j$ & damage cone (eq.~\ref{eq:cone}) and its generators\\
+$\mathcal N,\ P_\perp,\ \mathcal K$ & nuisance sensitivity subspace, projector onto its orthogonal complement, subspace of confounded loss patterns\\
+$\varrho_j$ & identifiable fraction of substructure $j$ (eq.~\ref{eq:retention})\\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Monitor}}\\
+$y_t,\ z_t,\ r_t$ & log-frequencies, covariates (temperature deviation $\Delta T_t$, load proxy $q_t$), standardised plug-in residual\\
+$g_\beta,\ b_T,\ b_q$ & surrogate (eq.~\ref{eq:surrogate}) with temperature coefficient $b_T$ and load coefficient $b_q$\\
+$V,\ c,\ X_t$ & polyhedral generators of the cone; score-saturation scale $c$; bounded score in $[0,1]$ (eq.~\ref{eq:score})\\
+$\varsigma,\ \nu$ & Huber clipping scale and forgetting factor of the adaptation\\
+$\mu_0$ & null mean of the score for ideal standard-normal residuals\\
+$m_t$ & conditional mean excess $\E[X_t\mid\F_{t-1}]-\mu_0$\\
+$\delta,\ \hat\delta,\ \hat\delta_\varepsilon$ & bias allowance; commissioning estimate (two standard errors); certified allowance (Proposition~\ref{prop:delta})\\
+$\Lambda,\ \lambda$ & grid of bets, one bet\\
+$W_t^\lambda,\ W_t,\ \widetilde W_t$ & wealth of one bet, mixture wealth, discounted mixture wealth\\
+$\alpha,\ \varepsilon,\ \tau$ & false-alarm budget, calibration-failure budget, alarm time\\
+$t_0,\ t^\star$ & end of commissioning, damage onset\\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Acronyms and variant labels}}\\
+SHM, EOV & structural health monitoring; environmental and operational variability\\
+SAVI & safe anytime-valid inference\\
+FWFA & family-wise false-alarm probability (eq.~\ref{eq:fwfa})\\
+PHASE & full method; \textbf{-ND} no allowance; \textbf{-C} certified allowance; \textbf{-$\Omega$} omnibus score (no cone); \textbf{-BB} black-box surrogate; \textbf{-E} envelope-gated\\
+CTM, CTM-F & conformal test martingale with second-half or full-window calibration set\\
+CUSUM, SR, EWMA & cumulative-sum, Shiryaev--Roberts and exponentially weighted moving-average charts\\
+PCA-EOV, MSD & principal-component environmental-removal chart; Mahalanobis novelty index\\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+
+\section{Implementation details}\label{app:impl}
+
+\begin{singlespace}
+\small
+\noindent All code is supplied with the submission (\texttt{code/}); every stage uses fixed seeds. \emph{Generator:} eight-storey shear frame, storey mass $2.5\times10^5$\,kg, storey stiffness $6\times10^8$\,N/m; $m=6$ modes; identification noise Student-$t_5$ scaled to unit variance, relative standard deviations $0.60,0.72,0.84,0.96,1.08,1.20\%$ for modes 1--6; $\beta_T=2.5\times10^{-3}\,^\circ\mathrm{C}^{-1}$; ambient temperature $24-7\cos(2\pi(t/\text{year}-0.05))$, diurnal amplitude $4^\circ$C, AR(0.6) weather noise with innovation s.d.\ $1.1^\circ$C; storey thermal lags $0.7$ to $2.0$ epochs and gradient factors $0.86$ to $1.16$ (linear in storey); live load on floors 2--7, relative added mass $0.045\,\exp(-\tfrac12((h-12)/6)^2)$ times a weekday factor ($1$; $0.25$ at weekends) plus noise $0.004$, observed through a proxy with 10\% multiplicative and $0.0015$ additive error; epoch length 6\,h (1{,}460 epochs per year).
+
+\smallskip
+\noindent\emph{PHASE.} $t_0=1{,}460$ epochs. Surrogate fitted by recursive least squares with ridge $10^{-6}$ and forgetting factor $\nu=0.9995$. Commissioning pass~A (first 730 epochs): unfiltered fitting; the scatter $D$ is estimated robustly from the last two thirds of the pass-A one-step residuals (median absolute deviation, residuals beyond six robust standard deviations trimmed). Pass~B (last 730 epochs): the monitoring update rule runs and the scores used for $\hat\delta$ are sequential plug-in scores. $V$: 92 unit vectors (8 generators and 28 pairs with weights $0.25,0.5,0.75$). Score scale $c=3$, $\mu_0=0.3027$ (Monte Carlo, $4\times10^5$ draws, standard error $4\times10^{-4}$). Bet grid $\Lambda$: 12 values geometrically spaced from $0.05$ to $0.9/\mu_0=2.97$, equal weights. Huber clip $\varsigma=3$ applied after withholding the identifiable damage-consistent component. Allowance $\hat\delta=(\bar X-\mu_0+2\widehat{\mathrm{se}})^{+}$, $\widehat{\mathrm{se}}=s/\sqrt{n}$ with $n=730$. Alarm at $W_t\ge1/\alpha$, $\alpha=0.01$. \emph{Variants.} PHASE-ND: $\hat\delta=0$. PHASE-C: $\hat\delta_\varepsilon$ with $\varepsilon=0.005$ and threshold $200$. PHASE-$\Omega$: score $\min(\|r_t\|/8,1)$, its own $\mu_0=0.2936$ and allowance. PHASE-BB: per-mode quadratic regression on $[1,\Delta T,\Delta T^2,q,\Delta Tq]$, same forgetting, own scale and allowance. PHASE-E: epochs with $\Delta T$ outside the $0.5$--$99.5\%$ commissioning quantiles or $q$ above its $99.5\%$ quantile are skipped (no bet, no discount).
+
+\smallskip
+\noindent\emph{Comparators.} $3\sigma$: $\max_i|r_{it}|>3$. Calibrated chart, CUSUM, Shiryaev--Roberts, EWMA, PCA-EOV and Mahalanobis: threshold equal to the 99th percentile of the monitoring-period maximum of the statistic over the 150 calibration records (one-year horizon; calibrated chart threshold $24.32$, CUSUM $17.92$). CUSUM: $S_t=\max(0,S_{t-1}+X_t-\mu_0-0.05)$. Shiryaev--Roberts: $R_t=(1+R_{t-1})\exp(4(X_t-\mu_0-0.05))$, statistic $\log(1+R_t)$. EWMA: smoothing weight $0.05$ on $X_t$, standardised by its asymptotic standard deviation. PCA-EOV: two leading principal components of the commissioning log-frequencies removed, statistic the norm of the remainder divided by its commissioning standard deviation. Mahalanobis: $\sqrt{r^\top\hat\Sigma^{-1}r}$, $\hat\Sigma$ from pass-A standardised residuals. Repeated $T^2$: $r_t^\top r_t>\chi^2_{6,0.99}$. CTM and CTM-F: as in Section~4.1.3, calibration sets of 730 and about 1{,}200 scores; ties randomised with fixed seeds.
+
+\smallskip
+\noindent\emph{Z24.} Three tracked modes (bands 3.60--4.10, 9.60--10.15, 12.05--12.95\,Hz), $m=3$, 81.9\,s epochs. Surrogate reduced to a running intercept with forgetting $0.995$; cone generators: 3 singletons, 9 pairs and the all-modes direction (13 vectors), the non-positive orthant; $c=2.5$, $\mu_0=0.380$; allowance and bet grid as for the simulation; comparator thresholds from the commissioning window only (99th-percentile rules scaled by 1.5 for PCA, Mahalanobis and EWMA; fixed 6.0 for Shiryaev--Roberts). Commissioning epochs are split into halves: the first half fixes the intercept and the second half the scale and $\hat\delta$.
+\end{singlespace}
+\end{revblock}
+
+\section{Proofs}\label{app:proofs}
+\addcontentsline{toc}{section}{Proofs}
 
 \paragraph{Proposition~\ref{prop:ident}.}
-By \eqref{eq:shift} the standardised signature of a loss pattern $\rho$ is $-D^{-1}S\rho$. A uniform modulus change of relative size $\epsilon$ produces $-\tfrac12\epsilon D^{-1}\kappa$ and a relative added mass $\zeta$ produces $-\tfrac12\zeta D^{-1}\eta$, so the set of signatures attainable by the nuisance is exactly $\mathcal{N}$. Hence $\rho$ is confounded if and only if $D^{-1}S\rho\in\mathcal{N}$, and the component of the signature carrying information not attainable by the nuisance is $P_\perp D^{-1}S\rho$. For $\rho=\rho_0\mathbf{1}$, \eqref{eq:rowsum} gives $S\mathbf{1}=\mathbf{1}=\kappa$, so the signature is $-\rho_0 D^{-1}\kappa\in\mathcal{N}$ and is confounded for every $\rho_0$. If $m\le2$ then generically $\mathcal{N}=\R^m$ and $P_\perp=0$, so no pattern is identifiable. \hfill$\square$
+By \eqref{eq:shift} the standardised signature of a loss pattern $\rho$ is $-A\rho$. A uniform modulus change of relative size $\epsilon$ produces $-\tfrac12\epsilon D^{-1}\kappa$ and a relative added mass $\zeta$ produces $-\tfrac12\zeta D^{-1}\eta$, so the set of signatures attainable by the nuisance is exactly $\mathcal{N}$. Hence \rev{(a)} $\rho$ is confounded if and only if $A\rho\in\mathcal{N}$, that is $P_\perp A\rho=0$; the confounded patterns form $\mathcal K=\ker(P_\perp A)$, of dimension $n-\mathrm{rank}(P_\perp A)\ge n-\mathrm{rank}(P_\perp)=n-(m-\dim\mathcal N)$. \rev{(b)} For $\rho=\rho_0\mathbf{1}$, \eqref{eq:rowsum} gives $S\mathbf{1}=\mathbf{1}=\kappa$, so $A\rho=\rho_0D^{-1}\kappa\in\mathcal{N}$ for every $\rho_0$. \rev{(c) Suppose $A$ is injective and $\mathcal N\cap\mathrm{range}(A)=\mathrm{span}\{D^{-1}\kappa\}$. If $\rho\in\mathcal K$ then $A\rho\in\mathcal N\cap\mathrm{range}(A)$, so $A\rho=cA\mathbf 1$ (because $A\mathbf1=D^{-1}\kappa$), and injectivity gives $\rho=c\mathbf1$. Conversely, if $v\in\ker A$, $v\ne0$, then $Av=0\in\mathcal N$ so $v\in\mathcal K$, and $v\not\propto\mathbf1$ because $A\mathbf1=D^{-1}\kappa\ne0$; if $u=A\rho_u\in\mathcal N$ is not parallel to $D^{-1}\kappa$ then $\rho_u\in\mathcal K$ and $\rho_u\not\propto\mathbf1$. (d) $\rho$ and $\rho'$ have signatures that differ by something the nuisance cannot produce exactly when $P_\perp A(\rho-\rho')\ne0$, and the rank of $P_\perp A$ is at most the rank of $P_\perp$, which is $m-\dim\mathcal N$.} If $m\le\dim\mathcal{N}$ then generically $\mathcal{N}=\R^m$ and $P_\perp=0$, so no pattern is identifiable. \hfill$\square$
 
 \paragraph{Proposition~\ref{prop:poly}.}
 The first claim holds because each $v_k\in\Cone$ has unit norm and $\|\Pi_\Cone(r)\|=\sup_{v\in\Cone,\|v\|\le1}\langle v,r\rangle$. For the second, let $v^\star$ attain the supremum and let $v_k$ satisfy $\angle(v_k,v^\star)\le\gamma$, so $\|v_k-v^\star\|=2\sin(\gamma/2)$. Then by Cauchy--Schwarz $\langle v_k,r\rangle=\langle v^\star,r\rangle+\langle v_k-v^\star,r\rangle\ge\|\Pi_\Cone(r)\|-2\sin(\gamma/2)\|r\|$. Monotonicity is immediate since enlarging $V$ enlarges the set over which the maximum is taken. \hfill$\square$
@@ -680,13 +908,20 @@ Fix $\lambda\in[0,1/\mu_0)$. Since $X_t\in[0,1]$, the factor $1+\lambda(X_t-\mu_
 $\E[W^\lambda_t\mid\F_{t-1}]=W^\lambda_{t-1}\big(1+\lambda(\E[X_t\mid\F_{t-1}]-\mu_0)\big)\le W^\lambda_{t-1}$
 by \eqref{eq:null} and $\lambda\ge0$. Thus each $W^\lambda$ is a non-negative supermartingale with initial value one, and so is the finite mixture $W_t$, convex combinations of supermartingales being supermartingales. Ville's inequality gives $\Prob(\exists t: W_t\ge1/\alpha)\le\E[W_{t_0}]\alpha=\alpha$. Nothing in the argument uses independence across epochs, the marginal law of $X_t$, or the accuracy of $\hat\beta_{t-1}$; only predictability of the bets and of the plug-in, which holds by construction, and the conditional mean bound \eqref{eq:null}. The same argument covers predictable bet sequences $\lambda_t$, since $\lambda_t$ then factors out of the conditional expectation. \hfill$\square$
 
+\begin{revblock}
 \paragraph{Proposition~\ref{prop:delta}.}
-Under the relaxed null, $\E[1+\lambda(X_t-\mu_0)\mid\F_{t-1}]\le1+\lambda\delta$, so dividing the increment by the deterministic factor $1+\lambda\delta$ restores the supermartingale property:
-$\E[\widetilde W^\lambda_t\mid\F_{t-1}]\le\widetilde W^\lambda_{t-1}$. Ville's inequality applies as before. \hfill$\square$
+(i) Under $m_t\le\delta=\hat\delta$, $\E[1+\lambda(X_t-\mu_0)\mid\F_{t-1}]=1+\lambda m_t\le1+\lambda\delta$, so dividing the increment by the deterministic factor $1+\lambda\delta$ restores the supermartingale property; Ville's inequality applies as in Proposition~\ref{prop:valid}.
+
+(ii) Let $\iota_s=\mathbf 1\{s<\sigma\}$. Since $m_s$ is $\F_{s-1}$-measurable and $\hat\delta$ is $\F_{t_0}$-measurable, $\{s<\sigma\}=\{m_u\le\hat\delta\ \forall\,t_0<u\le s\}\in\F_{s-1}$, so $\iota_s$ is predictable. Define $V^\lambda_t=\prod_{s=t_0+1}^t f_s$ with $f_s=\frac{1+\lambda(X_s-\mu_0)}{1+\lambda\hat\delta}$ if $\iota_s=1$ and $f_s=1$ otherwise. For $\iota_s=1$, $\E[f_s\mid\F_{s-1}]=(1+\lambda m_s)/(1+\lambda\hat\delta)\le1$; for $\iota_s=0$ it equals one. Hence $V^\lambda$, and the mixture $V$, are non-negative supermartingales with initial value one and $\Prob(\exists t:V_t\ge1/\alpha)\le\alpha$. On $\{\sigma=\infty\}$ we have $V=\widetilde W$, so $\Prob(\exists t:\widetilde W_t\ge1/\alpha)\le\alpha+\Prob(\sigma<\infty)$.
+
+(iii) Put $\xi_s=X_s-\E[X_s\mid\F_{s-1}]$. Because $X_s\in[0,1]$, conditionally on $\F_{s-1}$ the variable $\xi_s$ lies in an interval of length one, so Azuma--Hoeffding (conditional Hoeffding lemma) gives $\Prob\big(-n^{-1}\sum_{s\in C}\xi_s>u\big)\le e^{-2nu^2}$. With $u=\sqrt{\log(1/\varepsilon)/(2n)}$, with probability at least $1-\varepsilon$ we have $\bar m_C=\bar X_C-\mu_0-n^{-1}\sum_{s\in C}\xi_s\le\bar X_C-\mu_0+u$, hence $\bar m_C\le\hat\delta_\varepsilon$ (the truncation at zero cannot bind against a negative upper bound on $\bar m_C$). On that event representativeness gives $\sup_{t>t_0}m_t\le\bar m_C\le\hat\delta_\varepsilon$, so $\sigma=\infty$. Thus $\Prob(\sigma<\infty)\le\varepsilon$, and part~(ii) at level $\alpha-\varepsilon$ gives $\mathrm{FWFA}\le(\alpha-\varepsilon)+\varepsilon=\alpha$. \hfill$\square$
 
 \paragraph{Proposition~\ref{prop:delay}.}
-Write $Z_s=\log(1+\lambda(X_s-\mu_0))-\log(1+\lambda\delta)$ and $\bar g=g(\lambda)-\log(1+\lambda\delta)>0$. Then $\sum_{s\le t}(Z_s-\E[Z_s\mid\F_{s-1}])$ is a martingale with increments bounded by $B$, and $\E[Z_s\mid\F_{s-1}]\ge\bar g$ after $t^\star$. The mixture satisfies $\log W_t\ge-\log|\Lambda|+\log\widetilde W^\lambda_t$, so the alarm occurs no later than the first $t$ with $\log\widetilde W^\lambda_t\ge\log(1/\alpha)+\log|\Lambda|$. Applying the optional stopping theorem to the stopped martingale and using Wald's identity gives
-$\bar g\,\E[\tau-t^\star]\ \ge\ \log(1/\alpha)+\log|\Lambda|-(\log W_{t^\star})^{-}-B$,
-which rearranges to \eqref{eq:delay}. The condition $\bar g>0$ is exactly the requirement that the damage generate evidence faster than the bias discount consumes it. \hfill$\square$
+Write $Z_s=\log(1+\lambda(X_s-\mu_0))-\log(1+\lambda\hat\delta)$, so that $L^\lambda_t=L^\lambda_{t^\star}+\sum_{s=t^\star+1}^tZ_s$ for $t>t^\star$. The increments are bounded: $Z_s\le B_\lambda$ and $Z_s\ge\log(1-\lambda\mu_0)-\log(1+\lambda\hat\delta)>-\infty$ because $\lambda<1/\mu_0$. Since the mixture dominates its components, $\widetilde W_t\ge\widetilde W^\lambda_t/|\Lambda|$, so $L^\lambda_t\ge b$ implies $\widetilde W_t\ge1/\alpha$ and hence $\tau\le T:=\inf\{t>t^\star:L^\lambda_t\ge b\}$. Let $e_s=\E[Z_s\mid\F_{s-1}]\ge\gamma_\lambda$ and $\xi_s=Z_s-e_s$, a bounded martingale difference sequence. For $n>t^\star$, $T_n=T\wedge n$ is a bounded stopping time, so optional stopping gives
+\[
+\E\Big[\sum_{s=t^\star+1}^{T_n}Z_s\,\Big|\,\F_{t^\star}\Big]=\E\Big[\sum_{s=t^\star+1}^{T_n}e_s\,\Big|\,\F_{t^\star}\Big]\ \ge\ \gamma_\lambda\,\E[T_n-t^\star\mid\F_{t^\star}].
+\]
+Before $T$ the log-wealth is below $b$, and at $T$ it exceeds $b$ by at most $B_\lambda$, so $L^\lambda_{T_n}\le b+B_\lambda$ and $\sum_{s=t^\star+1}^{T_n}Z_s=L^\lambda_{T_n}-L^\lambda_{t^\star}\le b+B_\lambda+(L^\lambda_{t^\star})^-$. Combining, $\gamma_\lambda\E[T_n-t^\star\mid\F_{t^\star}]\le b+B_\lambda+(L^\lambda_{t^\star})^-$; letting $n\to\infty$ (monotone convergence) bounds $\E[T-t^\star\mid\F_{t^\star}]$, and $(\tau-t^\star)^+\le T-t^\star$ gives \eqref{eq:delay}. The condition $\gamma_\lambda>0$ is exactly the requirement that the damage generate evidence faster than the allowance consumes it. \hfill$\square$
+\end{revblock}
 
 \end{document}

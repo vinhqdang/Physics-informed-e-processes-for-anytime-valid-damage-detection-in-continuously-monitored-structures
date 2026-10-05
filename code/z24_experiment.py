@@ -137,7 +137,29 @@ def monitor(burn, stream, alpha=ALPHA, seed=0):
                                     sigma=sig.tolist(), hcus=float(hcus))
 
 
-def experiment(burn_scen, mon_scen, reps=200, seed=0, data=None, mod='avt'):
+def reorder(a, rng, order):
+    """Epoch ordering inside one structural state.
+    perm: uniformly random (the exchangeability analysis of the main table);
+    chron: recorded order; rev: recorded order reversed;
+    rot: random circular shift of the recorded order (keeps serial dependence);
+    blockperm: the nine measurement setups are shuffled, order inside a setup kept."""
+    n = len(a)
+    if order == 'perm':
+        return a[rng.permutation(n)]
+    if order == 'chron':
+        return a
+    if order == 'rev':
+        return a[::-1]
+    if order == 'rot':
+        return np.roll(a, int(rng.integers(n)), axis=0)
+    if order in ('blockperm', 'poolblock'):
+        blocks = np.array_split(a, 9)
+        return np.concatenate([blocks[i] for i in rng.permutation(len(blocks))])
+    raise ValueError(order)
+
+
+def experiment(burn_scen, mon_scen, reps=200, seed=0, data=None, mod='avt',
+               order='perm'):
     data = data if data is not None else Z.build(mod=mod)
     rng = np.random.default_rng(seed)
     keys = ('phase', 'phase_omni', 'ctm', 'cusum', 'sr', 'ewma',
@@ -146,13 +168,22 @@ def experiment(burn_scen, mon_scen, reps=200, seed=0, data=None, mod='avt'):
     first = {k: [] for k in keys}
     deltas = []
     for r in range(reps):
-        burn = np.concatenate([np.log(data[s]) for s in burn_scen])
-        burn = burn[rng.permutation(len(burn))]
+        if order == 'perm':
+            burn = np.concatenate([np.log(data[s]) for s in burn_scen])
+            burn = burn[rng.permutation(len(burn))]
+        elif order == 'poolblock':
+            # commissioning pooled across the reference states, shuffled in whole
+            # measurement set-ups (serial dependence kept inside each set-up)
+            bl = [b for s in burn_scen for b in np.array_split(np.log(data[s]), 9)]
+            burn = np.concatenate([bl[i] for i in rng.permutation(len(bl))])
+        else:
+            burn = np.concatenate([reorder(np.log(data[s]), rng, order)
+                                   for s in burn_scen])
         blocks, bounds = [], []
         n = 0
         for s in mon_scen:
             a = np.log(data[s])
-            a = a[rng.permutation(len(a))]
+            a = reorder(a, rng, order)
             blocks.append(a); n += len(a); bounds.append((s, n))
         stream = np.concatenate(blocks)
         al, _, info = monitor(burn, stream, seed=r)
