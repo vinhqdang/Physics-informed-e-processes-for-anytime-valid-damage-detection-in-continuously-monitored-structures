@@ -184,7 +184,7 @@ if __name__ == '__main__':
     out = dict(fwer=fwer_table(), delay_detail=delay_detail(), delay_compare=delay_compare(),
                burn=burn_table(), late=late_table(), nuisance=nuisance_table(),
                z24=z24_table() if os.path.exists('z24_pool.json') else '',
-               ablation=ablation_table(), twin=twin_table())
+               ablation=ablation_table().replace('%%','%'), twin=twin_table().replace('%%','%'))
     for k, v in out.items():
         open('tables/%s.tex' % k, 'w').write(v + '\n')
         print('=== ', k); print(v)

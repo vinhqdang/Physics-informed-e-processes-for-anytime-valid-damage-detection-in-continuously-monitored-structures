@@ -41,7 +41,7 @@
 \newcommand{\F}{\mathcal{F}}
 \newcommand{\Cone}{\mathcal{C}}
 
-\title{\textbf{Physics-informed e-processes for damage detection under a\\ lifetime false-alarm budget in continuously monitored structures}}
+\title{\textbf{Physics-informed e-processes for damage detection under a lifetime false-alarm budget in continuously monitored structures}}
 \date{}
 
 \begin{document}
@@ -61,7 +61,7 @@ Article classification: Research paper
 
 \rev{\noindent\textbf{Purpose} -- Damage thresholds for continuously monitored structures are usually set as if one test were run, so the chance of a false alarm over a monitoring life can approach one. This paper develops a rule with a stated false-alarm budget for monitoring of unspecified length and tests how well the budget survives finite commissioning.}
 
-\rev{\noindent\textbf{Design/methodology/approach} -- PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence) predicts temperature and load effects on natural frequencies, scores the remainder only in directions stiffness loss can produce (the damage cone), and accumulates it in a betting e-process. We use 3{,}600 simulated frame records, sixteen comparators and variants, and Z24 bridge data.}
+\rev{\noindent\textbf{Design/methodology/approach} -- PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence) predicts temperature and load effects on natural frequencies, scores the remainder only in directions stiffness loss can produce (the damage cone), and accumulates it in a betting e-process. We use 4{,}000 simulated frame records, sixteen comparators and variants, and Z24 bridge data.}
 
 \rev{\noindent\textbf{Findings} -- The budget is a conditional theorem; its commissioning-based calibration is only empirical, and the provable variant has little power. With one year of commissioning, PHASE raised no false alarm in 300 undamaged records at one year or in 300 at three (upper 95\% limit 1.2\%). A 5\% loss at storey~3 was detected in all 150 records (median 59 days), a 2\% loss in 34\%, and a 5\% loss after two healthy years in 66\%. Commissioning of 30--60 days destroyed false-alarm control. On Z24, a reduced version stayed silent when stiffness recovered; its response to settlement depended on commissioning order.}
 
@@ -101,7 +101,7 @@ The method developed here, PHASE (Physics-informed Hedged Anytime-valid Sequenti
 \item It derives the damage cone and the nuisance sensitivity subspace from eigenvalue perturbation, and proves an identifiability result: a stiffness-loss pattern is confounded with nuisance change if and only if its standardised signature lies in the nuisance subspace (Proposition~\ref{prop:ident}). \rev{Uniform loss is always confounded; it is the only confounded pattern only under additional conditions that the frame studied here does not meet. Identifiability relative to the nuisance is distinguished from unique localisation.} This yields a per-substructure detectability map that tells an engineer which parts of a structure a given modal set can \rev{support claims about}.
 \item It prices surrogate misspecification explicitly. If the physics-structured surrogate leaves a residual bias $\delta$, the evidence process is discounted at rate $\log(1+\lambda\delta)$ per epoch and remains valid (Proposition~\ref{prop:delta}); \rev{a corrected delay bound that uses the relevant mixture component} shows how the discount trades against detection speed (Proposition~\ref{prop:delay}).
 \item It evaluates the method on real measurements from the Z24 bridge progressive damage test. \rev{Only a reduced version of the method can be run there. The data support the directional discrimination and the dependence of the monitor on its commissioning data; chronological and dependence-preserving re-analyses show that the timing comparison with the omnibus variant depends on how commissioning epochs are ordered.}
-\item It reports a controlled simulation study over \rev{3{,}600 simulated records (2{,}900 two-year and 700 four-year)} against sixteen comparators and variants spanning current SHM practice, classical quickest detection and distribution-free anytime-valid testing, \rev{with interval estimates for all rates, a late-onset experiment, a finer commissioning sweep, a finite-sample-certified variant and a restart variant}, and it reports the costs of validity as well as its benefits.
+\item It reports a controlled simulation study over \rev{4{,}000 simulated records (3{,}300 two-year and 700 four-year)} against sixteen comparators and variants spanning current SHM practice, classical quickest detection and distribution-free anytime-valid testing, \rev{with interval estimates for all rates, a late-onset experiment, a finer commissioning sweep, a finite-sample-certified variant, a restart variant, ablations of the cone and of the adaptation rule, and a digital-twin error experiment}, and it reports the costs of validity as well as its benefits.
 \end{enumerate}
 
 Section~2 reviews the relevant literature. Section~3 formalises the monitoring problem, derives the physics and develops PHASE. Section~4 reports the simulation study, Section~5 the application to the Z24 bridge, and Section~6 discusses implications and concludes.
@@ -411,7 +411,7 @@ Modulus depends on temperature with $\beta_T=2.5\times10^{-3}$\,$^\circ$C$^{-1}$
 
 \subsubsection{Scenarios}
 
-Seven non-healthy scenarios are simulated, each with onset at epoch 1{,}825 (year 1.25): abrupt stiffness loss of 2\%, 5\% and 10\% at storey~3; a gradual loss reaching 6\% at storey~3 over 60 days; abrupt 5\% loss at storeys 1 and 6, chosen for their contrasting identifiable fractions; and a benign 3\% \emph{stiffening} of all storeys, representing temporary propping during façade works, which must not trigger a damage alarm. Undamaged records are simulated over two years and over four years to test behaviour beyond a calibration horizon. \rev{Two further groups were added to answer questions about commissioning and onset time: a finer sweep of the commissioning window, and records of four years with damage onset late, at epoch 4{,}745 (year 3.25), after two years of healthy monitoring.}
+Seven non-healthy scenarios are simulated, each with onset at epoch 1{,}825 (year 1.25): abrupt stiffness loss of 2\%, 5\% and 10\% at storey~3; a gradual loss reaching 6\% at storey~3 over 60 days; abrupt 5\% loss at storeys 1 and 6, chosen for their contrasting identifiable fractions; and a benign 3\% \emph{stiffening} of all storeys, representing temporary propping during façade works, which must not trigger a damage alarm. Undamaged records are simulated over two years and over four years to test behaviour beyond a calibration horizon. \rev{Three further groups were added to answer questions about commissioning, onset time and the digital twin: a finer sweep of the commissioning window; records of four years with damage onset late, at epoch 4{,}745 (year 3.25), after two years of healthy monitoring; and records in which the monitor's structural model carries errors in stiffness and mass.}
 
 \subsubsection{Comparators}\label{sec:comparators}
 
@@ -441,7 +441,7 @@ The remaining quantities are defined as follows, because the treatment of record
 \item \emph{Localisation.} The localisation index is read at the PHASE alarm epoch. Accuracy is the fraction of \emph{detected} records in which the index names the damaged storey; its denominator is the number of detected records, stated beside the percentage.
 \end{itemize}
 
-Table~\ref{tab:accounting} gives the accounting of the simulated records. The first four groups total 1{,}800 records; the last two, a finer commissioning sweep and a late-onset experiment, answer questions about commissioning and onset time.
+Table~\ref{tab:accounting} gives the accounting of the simulated records. The first four groups total 1{,}800 records; the last three, a finer commissioning sweep, a late-onset experiment and a twin-error experiment, answer questions about commissioning, onset time and the fidelity of the digital twin.
 
 \begin{table}[t]
 \centering
@@ -458,8 +458,9 @@ Healthy, four-year & Table~\ref{tab:fwer} three-year horizon & 300 \\
 Damage scenarios & seven scenarios $\times$ 150, two-year (Table~\ref{tab:delay}) & 1{,}050 \\
 Commissioning sweep & seven window lengths $\times$ (100 healthy + 100 damaged), two-year (Table~\ref{tab:burn}) & 1{,}400 \\
 Late onset & four scenarios $\times$ 100, four-year (Table~\ref{tab:late}) & 400 \\
+Twin error & two error levels $\times$ (100 healthy + 100 damaged), two-year (Table~\ref{tab:twin}) & 400 \\
 \midrule
-Total & 2{,}900 two-year and 700 four-year records & 3{,}600 \\
+Total & 3{,}300 two-year and 700 four-year records & 4{,}000 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -541,7 +542,7 @@ The conformal test martingale needs a careful reading. With the second half of t
 
 The value of the allowance is visible in the same table. Without it (PHASE-ND), the false-alarm probability was 0.003 at one year and 0.017 at three (interval 0.005--0.038), as the unmodelled thermal lag and gradient accumulated evidence at a slow but non-zero rate. With $\hat\delta$ estimated from commissioning data (mean 0.020, standard deviation 0.011 across the 150 calibration records) no false alarm occurred in 600 healthy records totalling 1{,}200 structure-years of monitoring (300 one-year and 300 three-year monitoring periods). The certified allowance of PHASE-C (mean 0.059) also gave no false alarm, at a large cost in power (Table~\ref{tab:delay}). This zero should not be read as support for Proposition~\ref{prop:delta}(iii): the PHASE-C allowance is essentially the Hoeffding margin (about 0.060 for 730 scores and $\varepsilon=0.005$) and is larger than the seasonal excess in most records, so representativeness is not what protects it.
 
-\paragraph{How well do the assumptions hold in the simulation?} The conditional mean excess $m_t$ cannot be observed, but its time averages can be estimated from the healthy records. Over the 600 healthy records the median monitoring-period mean of $X_t-\mu_0$ was $-0.003$, against a median allowance of 0.020, and it exceeded the allowance in 8 records (1.3\%). The lag-one autocorrelation of the score was weak (median 0.04; 10th to 90th percentile 0.01--0.06). The 90-day block means, however, exceeded the allowance in at least one block in 94.5\% of the records (the largest of 4 or 12 blocks per record; [[BLK]]). Scores are also computed under Student-$t$ identification noise, which lowers the null mean of the score by about 0.018 relative to the Gaussian value $\mu_0$ used by the monitor, a slack of the same size as the allowance and specific to this generator. The uniform bound of Proposition~\ref{prop:delta}(i), which is sufficient for validity, is therefore not literally satisfied at the scale of a season: the bias of the surrogate varies seasonally and diurnally. The discounted process still never alarmed, because over a whole campaign the negative drift of the log-wealth (the allowance plus the Jensen term) outweighs short stretches of positive excess. The absence of false alarms is thus not evidence that the theorem's condition holds; it shows slack in the allowance for this generator, and the restart variant (Section~\ref{sec:res-late}), whose components see only a few months, shows that the slack is limited.
+\paragraph{How well do the assumptions hold in the simulation?} The conditional mean excess $m_t$ cannot be observed, but its time averages can be estimated from the healthy records. Over the 600 healthy records the median monitoring-period mean of $X_t-\mu_0$ was $-0.003$, against a median allowance of 0.020, and it exceeded the allowance in 8 records (1.3\%). The lag-one autocorrelation of the score was weak (median 0.04; 10th to 90th percentile 0.01--0.06). The 90-day block means, however, exceeded the allowance in at least one block in 94.5\% of the records (the largest of 4 or 12 blocks per record; 34.0\% of the 4{,}800 individual blocks exceeded it). Scores are also computed under Student-$t$ identification noise, which lowers the null mean of the score by about 0.018 relative to the Gaussian value $\mu_0$ used by the monitor, a slack of the same size as the allowance and specific to this generator. The uniform bound of Proposition~\ref{prop:delta}(i), which is sufficient for validity, is therefore not literally satisfied at the scale of a season: the bias of the surrogate varies seasonally and diurnally. The discounted process still never alarmed, because over a whole campaign the negative drift of the log-wealth (the allowance plus the Jensen term) outweighs short stretches of positive excess. The absence of false alarms is thus not evidence that the theorem's condition holds; it shows slack in the allowance for this generator, and the restart variant (Section~\ref{sec:res-late}), whose components see only a few months, shows that the slack is limited.
 \end{revblock}
 
 \begin{figure}[t]
@@ -715,7 +716,7 @@ Notably, once a full seasonal cycle is available, the black-box surrogate matche
 \begin{revblock}
 \subsubsection{Late damage onset: does evidence lost in a long healthy period matter?}\label{sec:res-late}
 
-All the scenarios above start damage three months after commissioning. Table~\ref{tab:late} places onset at year 3.25 of a four-year record, after two years of healthy monitoring, with the same nine months remaining. The result confirms the concern raised by the delay bound. At the median the mixture log-wealth at onset was $-7.2$, so the process starts the damage period nearly seven nats in deficit. PHASE detected 5\% loss at storey 3 in 66 of 100 records (against 150 of 150 with early onset), with a median delay of 203 days (against 59), detected none of the 2\% losses (against 34\%), and needed 83 days for 10\% loss (against 26). Benign stiffening still raised no alarm. PHASE-BB behaved similarly, and the certified variant PHASE-C detected no 5\% loss. The long healthy period therefore costs power substantially, an effect absent from the early-onset tables and one that a monitoring life of decades would make worse.
+All the scenarios above start damage three months after commissioning. Table~\ref{tab:late} places onset at year 3.25 of a four-year record, after two years of healthy monitoring, with the same nine months remaining. The result confirms the concern raised by the delay bound. At the median the mixture log-wealth at onset was $-7.2$, so the process starts the damage period nearly seven nats in deficit. PHASE detected 5\% loss at storey 3 in 66 of 100 records (against 150 of 150 with early onset), with a median delay of 203 days (against 59), detected none of the 2\% losses (against 34\%), and needed 83 days for 10\% loss (against 26). Benign stiffening still raised no alarm. PHASE-BB behaved similarly, and the certified variant PHASE-C detected no 5\% loss. The oracle CUSUM, which consumes the same score and is calibrated for a one-year horizon, detected every late 5\% loss at a median of 27 days and every late 2\% loss at 93 days, about eight and more than three times faster than PHASE respectively (and PHASE detected no 2\% loss); CTM-F detected 22\% of the 5\% losses and none of the 2\% losses. The long healthy period therefore costs power substantially, an effect absent from the early-onset tables and one that a monitoring life of decades would make worse.
 
 \begin{table}[t]
 \centering
@@ -730,21 +731,82 @@ Scenario & Monitor & Detected [95\% CI] & Delay, days (IQR) & Pre-onset \\
 5\% storey 3 & PHASE & 66/100 [0.55, 0.75] & 203 (162--239) & 0 \\
  & PHASE-R & 97/100 [0.91, 0.99] & 25 (22--28) & 3 \\
  & PHASE-C & 0/100 [0.00, 0.03] & --- & 0 \\
+ & CTM-F & 22/100 [0.14, 0.31] & 224 (198--237) & 0 \\
+ & CUSUM & 100/100 [0.96, 1.00] & 27 (25--29) & 0 \\
 2\% storey 3 & PHASE & 0/100 [0.00, 0.03] & --- & 0 \\
  & PHASE-R & 90/100 [0.82, 0.95] & 94 (84--118) & 2 \\
  & PHASE-C & 0/100 [0.00, 0.03] & --- & 0 \\
+ & CTM-F & 0/100 [0.00, 0.03] & --- & 0 \\
+ & CUSUM & 100/100 [0.96, 1.00] & 93 (80--106) & 0 \\
 10\% storey 3 & PHASE & 100/100 [0.96, 1.00] & 83 (68--103) & 0 \\
  & PHASE-R & 99/100 [0.94, 1.00] & 9 (8--10) & 1 \\
  & PHASE-C & 92/100 [0.84, 0.96] & 206 (186--232) & 0 \\
+ & CTM-F & 100/100 [0.96, 1.00] & 85 (75--100) & 0 \\
+ & CUSUM & 100/100 [0.96, 1.00] & 10 (9--10) & 0 \\
 Benign stiffening & PHASE & 0/100 [0.00, 0.03] & --- & 0 \\
  & PHASE-R & 0/100 [0.00, 0.03] & --- & 4 \\
  & PHASE-C & 0/100 [0.00, 0.03] & --- & 0 \\
+ & CTM-F & 0/100 [0.00, 0.03] & --- & 0 \\
+ & CUSUM & 0/100 [0.00, 0.03] & --- & 1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The start-time mixture of Section~\ref{sec:restart} removes most of this penalty. PHASE-R detected 97 of 100 late 5\% losses at a median of 25 days, 90 of 100 late 2\% losses, and was faster than PHASE even with early onset (10 days for 5\% loss at storey 3, Table~\ref{tab:delay}). It does not come free. Its observed false-alarm probability was 0.030 at one year and 0.023 at three (Table~\ref{tab:fwer}; the one-year interval, 0.014--0.056, excludes the nominal 0.01), and ten of the 400 late-onset records raised an alarm before onset. The reason is the one identified in Section~\ref{sec:res-fa}: components that start fresh see only a few months of data, over which the bias often exceeds the commissioning-based allowance, so the slack that protects the single-start process is not available to them. PHASE-R is therefore valid under the condition of Proposition~\ref{prop:restart} but not empirically calibrated by the allowance used here; to keep its error under control the allowance would have to bound the bias block by block, a larger and slower-to-estimate quantity that we have not pursued. We report PHASE-R as a tested remedy with a cost, not as a recommended method.
 \end{revblock}
+
+\begin{revblock}
+\subsubsection{What the physics contributes: ablations and digital-twin error}\label{sec:res-ablate}
+
+Two ablations isolate roles of the physics (Table~\ref{tab:ablation}). PHASE-S replaces the physics-derived cone by the plain non-positive orthant (singletons, pairs and the all-modes direction in standardised residual space) with everything else unchanged, so it keeps the sign restriction and drops the finite-element sensitivities. PHASE-NA lets the surrogate adapt without withholding the identifiable damage-consistent component.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Ablations. Detection rate / median delay in days among detected records (150 records per scenario; 100 for late onset). False alarms: records with an alarm among 300 two-year (one-year horizon) and 300 four-year (three-year horizon) healthy records. PHASE-S: sign-only score. PHASE-NA: no withholding in the adaptation. PHASE-$\Omega$: no sign restriction.}
+\label{tab:ablation}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+Scenario & PHASE & PHASE-S & PHASE-NA & PHASE-$\Omega$ \\
+\midrule
+2\% storey 3 & 0.34 / 156 & 0.02 / 252 & 0.33 / 152 & 0.00 / --- \\
+5\% storey 3 & 1.00 / 59 & 0.99 / 91 & 1.00 / 59 & 0.29 / 157 \\
+10\% storey 3 & 1.00 / 26 & 1.00 / 34 & 1.00 / 26 & 0.99 / 34 \\
+Gradual 6\% & 1.00 / 80 & 1.00 / 111 & 1.00 / 80 & 0.44 / 179 \\
+5\% storey 1 & 1.00 / 38 & 1.00 / 57 & 1.00 / 38 & 0.60 / 108 \\
+5\% storey 6 & 1.00 / 62 & 0.99 / 95 & 1.00 / 63 & 0.22 / 140 \\
+Benign stiffening & 0.00 / --- & 0.00 / --- & 0.00 / --- & 1.00 / 11 \\
+Late onset, 5\% storey 3 & 0.66 / 203 & 0.06 / 257 & 0.61 / 201 & 0.02 / 219 \\
+\midrule
+False alarms, 1-year ; 3-year & 0/300 ; 0/300 & 0/300 ; 0/300 & 0/300 ; 0/300 & 0/300 ; 0/300 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sign restriction alone is not enough. PHASE-S kept the false-alarm control (0/300 at both horizons) but was much less powerful than PHASE: 2\% of the 2\% losses were detected against 34\%, the 5\% loss at storey~3 took 91 days against 59, the 5\% loss at storey~1 57 days against 38, and after two healthy years 6\% of 5\% losses were detected against 66\%. In this generator the physics-derived directions, which say which combinations of frequencies a loss produces and in what proportion, therefore add power beyond the sign, and removing the sign as well (PHASE-$\Omega$) is worse still. The caveat is that the twin is the generator's own model; the next experiment relaxes that. PHASE-NA, by contrast, was indistinguishable from PHASE: 49 against 51 detections of the 2\% loss, identical delays at 5\% and 10\%, and 61 against 66 detections after two healthy years. Over the horizons simulated the surrogate absorbs the confounded component too slowly (timescale about 2{,}000 epochs; Section~\ref{sec:res-detect}) for withholding it to matter, and the longest post-onset window is 1{,}095 epochs. The benefit of identifiability-aware adaptation is therefore not demonstrated here and would need damage lasting several adaptation timescales.
+
+\paragraph{Digital-twin error.} In every other experiment the monitor's twin is the generator's own first-order model. To test twin error, the sensitivities, cone, nuisance projector and $\mu_0$ were computed from a model whose storey stiffnesses and floor masses carried independent Gaussian errors of standard deviation 10\% and 5\% (and, in a second run, 20\% and 10\%), drawn anew for each record, while the data came from the unperturbed structure (Table~\ref{tab:twin}).
+
+\begin{table}[t]
+\centering
+\scriptsize
+\caption{Digital-twin error. Each cell: records with a false alarm among 100 healthy records / detections of a 5\% loss at storey~3 among 100 damaged records / median delay in days. The standard deviations are those of the relative errors in storey stiffness and floor mass of the monitor's model.}
+\label{tab:twin}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lcccccc}
+\toprule
+Twin error & PHASE & PHASE-BB & PHASE-$\Omega$ & PHASE-NA & CTM-F & CUSUM \\
+\midrule
+10\% stiffness, 5\% mass & 0 / 100 / 60 & 0 / 100 / 57 & 0 / 21 / 122 & 0 / 100 / 60 & 0 / 100 / 72 & 0 / 100 / 26 \\
+20\% stiffness, 10\% mass & 0 / 100 / 62 & 0 / 100 / 57 & 0 / 23 / 173 & 0 / 100 / 63 & 0 / 100 / 72 & 1 / 100 / 26 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+None of PHASE, PHASE-BB, PHASE-$\Omega$, PHASE-NA and CTM-F raised a false alarm at either error level (one CUSUM record did at the larger), and PHASE detected the 5\% loss in all 100 records, at medians of 60 and 62 days against 59 days with the exact twin; the cone-free ablation again detected about a fifth. Twin error of this size therefore did not degrade the results. The limits are clear. The generator's temperature law is a uniform change of modulus, so the temperature direction $\kappa$ is exact in any twin (the row-sum identity holds for every model) and the errors enter through the load direction, the cone and the projector. Non-uniform temperature effects, effects that are not stiffness changes, and a twin that lacks structural features altogether were not tested, and 100 records bound a false-alarm probability only to about 3.6\%.
+\end{revblock}
+
 
 \subsubsection{Operational and environmental translation}\label{sec:res-oper}
 
@@ -839,9 +901,9 @@ The main results below treat the epochs within a state as exchangeable and are r
 Component & Simulation (Section~\ref{sec:sim}) & Z24 (this section) \\
 \midrule
 Physics-structured surrogate with tied temperature response & Yes; compared with the black-box surrogate & No: reduced to a running intercept \\
-Damage cone (sign restriction) & Yes; cone-free ablation PHASE-$\Omega$, benign stiffening & Reduced: non-positive orthant; directional discrimination on the recovery state \\
+Damage cone (sign restriction) & Yes; ablations PHASE-$\Omega$ (no sign) and PHASE-S (sign only), benign stiffening & Reduced: non-positive orthant; directional discrimination on the recovery state \\
 Nuisance subspace, identifiable fraction, localisation & Yes; localisation correct at storeys 3 and 6, failed at storey~1 & No: cannot be exercised; localisation not attempted \\
-Identifiability-aware adaptation & Used in every run; no separate ablation reported & Reduced: filtered intercept update with the orthant cone \\
+Identifiability-aware adaptation & Used in every run; ablation PHASE-NA shows no measurable effect over the horizons simulated & Reduced: filtered intercept update with the orthant cone \\
 Betting e-process with allowance $\hat\delta$ & Yes; no-allowance and certified variants & Yes, with $\hat\delta$ from the commissioning data \\
 Commissioning window and envelope & Yes; sweep of window length & Yes; depends on how commissioning data are ordered \\
 Separation of damage from environment & Yes, for a generator with unmodelled effects & No; the data cannot test it \\
@@ -959,7 +1021,9 @@ Third, the commissioning requirement should be treated as a design constraint ra
 
 \paragraph{Missing data and recalibration.} Skipping an epoch leaves the evidence process unchanged provided the decision to skip is made without looking at that epoch's score (sensor outage, a scheduled quality rejection based on the identification's own uncertainty); screening epochs by the size of their residual would bias the process and void the guarantee. Dropped or mismatched modes were not simulated. Any re-estimation of the scatter $D$, of $\mu_0$ or of $\hat\delta$, and any re-commissioning after maintenance or a retrofit, starts a new process and should consume a pre-allocated share of the budget; known changes outside the cone, such as stiffening retrofits, should trigger planned re-commissioning.
 
-\paragraph{Long-lived assets.} Power decays with the healthy time since the last start of the evidence process (Section~\ref{sec:res-late}), so a single commissioning followed by decades of monitoring is not a configuration we can recommend. A natural configuration, which we have not evaluated, is scheduled re-commissioning, for example annually, in which the $k$-th restart spends a share $\alpha_k=6\alpha/(\pi^2k^2)$ of the lifetime budget (so that $\sum_k\alpha_k=\alpha$) at the price of a higher threshold $1/\alpha_k$ for later restarts. The restart variant PHASE-R, which achieves a similar effect without re-commissioning, lost its empirical error control. Persistent benign changes, such as a retrofit that stiffens the structure, should trigger re-commissioning; the effect of a long silent benign period on later detection was not simulated.\n\n\\paragraph{Are the delays acceptable?} A median delay of 59 days for a 5\\% loss at a single storey after three months of monitoring, and detection of only one record in three for a 2\\% loss within nine months, are acceptable for slow deterioration but not for sudden events (impact, earthquake, scour), for which event-triggered inspection remains necessary. After two healthy years the figures worsen: 66\\% of 5\\% losses were detected within nine months (median 203 days) and none of the 2\\% losses, against a median of 27 days and 100\\% for an oracle CUSUM with the same score (Table~\\ref{tab:late}). Whether a given delay is acceptable depends on the deterioration rate and on the consequence of delay for the structure, which the owner must judge; the delays reported here are the price of a 1\% lifetime budget and of the conservative allowance.
+\paragraph{Long-lived assets.} Power decays with the healthy time since the last start of the evidence process (Section~\ref{sec:res-late}), so a single commissioning followed by decades of monitoring is not a configuration we can recommend. A natural configuration, which we have not evaluated, is scheduled re-commissioning, for example annually, in which the $k$-th restart spends a share $\alpha_k=6\alpha/(\pi^2k^2)$ of the lifetime budget (so that $\sum_k\alpha_k=\alpha$) at the price of a higher threshold $1/\alpha_k$ for later restarts. The restart variant PHASE-R, which achieves a similar effect without re-commissioning, lost its empirical error control. Persistent benign changes, such as a retrofit that stiffens the structure, should trigger re-commissioning; the effect of a long silent benign period on later detection was not simulated.
+
+\paragraph{Are the delays acceptable?} A median delay of 59 days for a 5\\% loss at a single storey after three months of monitoring, and detection of only one record in three for a 2\\% loss within nine months, are acceptable for slow deterioration but not for sudden events (impact, earthquake, scour), for which event-triggered inspection remains necessary. After two healthy years the figures worsen: 66\\% of 5\\% losses were detected within nine months (median 203 days) and none of the 2\\% losses, against a median of 27 days and 100\\% for an oracle CUSUM with the same score (Table~\\ref{tab:late}). Whether a given delay is acceptable depends on the deterioration rate and on the consequence of delay for the structure, which the owner must judge; the delays reported here are the price of a 1\% lifetime budget and of the conservative allowance.
 \end{revblock}
 
 \subsection{Sustainability implications}\label{sec:sust}
@@ -970,7 +1034,7 @@ There is a further, less obvious \rev{possible} implication for equity. The comm
 
 \subsection{Limitations}\label{sec:limits}
 
-The controlled evidence here is simulation-based and the real-data study is limited in the ways set out in Section~\ref{sec:z24-scope}: three tracked modes, no covariate record, no localisation, and states measured on different days so that detection cannot be attributed to damage rather than environment. The generator was constructed to be adversarial in specific ways -- unmodelled thermal lag and gradients, heavy-tailed identification noise, an imperfect load proxy -- but a shear frame is a simple structure, real EOV includes effects we did not model such as humidity, wind and freeze--thaw stiffening, and real modal identification produces mode-mismatching and dropouts that we did not simulate. The Z24 progressive damage test exercises the directional claim on real measurements and the commissioning claim only in part, and it cannot exercise the identifiability analysis; a campaign with synchronous temperature, such as the Z24 long-term monitoring series or the KW51 retrofitting campaign, is the necessary next step. \rev{The comparators are single implementations calibrated on simulated healthy campaigns; their behaviour here should not be generalised to environmental-normalisation methods as a class.}
+The controlled evidence here is simulation-based and the real-data study is limited in the ways set out in Section~\ref{sec:z24-scope}: three tracked modes, no covariate record, no localisation, and states measured on different days so that detection cannot be attributed to damage rather than environment. The generator was constructed to be adversarial in specific ways -- unmodelled thermal lag and gradients, heavy-tailed identification noise, an imperfect load proxy -- but a shear frame is a simple structure, real EOV includes effects we did not model such as humidity, wind and freeze--thaw stiffening, and real modal identification produces mode-mismatching and dropouts that we did not simulate. The Z24 progressive damage test exercises the directional claim on real measurements and the commissioning claim only in part, and it cannot exercise the identifiability analysis; a campaign with synchronous temperature, such as the Z24 long-term monitoring series or the KW51 retrofitting campaign, is the necessary next step. \rev{The monitor's twin is the generator's own first-order model; an experiment with perturbed stiffness and mass (Section~\ref{sec:res-ablate}) did not degrade the results, but the generator's temperature law is a uniform change of modulus, so non-uniform temperature effects and a structurally incomplete twin remain untested, and real EOV is richer than simulated. The comparators are single implementations calibrated on simulated healthy campaigns; their behaviour here should not be generalised to environmental-normalisation methods as a class.}
 
 Several limitations are methodological. Only frequencies are used; mode shapes and their derivatives carry localisation information that the cone construction could exploit directly. The null \eqref{eq:null} is stated as a conditional mean bound \rev{that the surrogate is meant to make true, not a property the physics guarantees}, and the weight falls on $\hat\delta$. \rev{The theorem holds conditionally; the implemented estimate of $\hat\delta$, two standard errors from a finite commissioning sample, has no guarantee of its own, and the provably calibrated variant PHASE-C is too conservative to be useful over a one-year window. The representativeness assumption that would close the gap cannot be verified from commissioning data.} Our commissioning sweep shows how the allowance fails when the envelope is not covered. \rev{The long healthy period costs power: after two years PHASE detected 5\% loss in two thirds of records and 2\% loss in none, and the restart variant that repairs this lost its empirical false-alarm control.} The detection delays reported are two to three times those of an oracle CUSUM with early onset and, after two healthy years, about eight times (203 against 27 days for 5\% loss), which is the price of the anytime guarantee and of the conservative allowance, and for a structure monitored under a genuinely fixed horizon by an analyst who never peeks, the oracle procedure would be preferable. Finally, the localisation index is a heuristic accumulator rather than a calibrated estimator, \rev{with a baseline preference for some storeys on healthy data}; giving localisation claims their own anytime-valid guarantee via e-value based false discovery rate control across zones is a clear extension.
 
@@ -978,7 +1042,7 @@ Several limitations are methodological. Only frequencies are used; mode shapes a
 
 Structural health monitoring systems make thousands of decisions per year using rules designed for one. This paper has shown that, \rev{for the charts implemented here,} the resulting false-alarm probability is not a small correction -- a $3\sigma$ chart alarmed on every undamaged simulated structure within days -- and that raising thresholds to control error over one monitoring year traded the problem for a worse one, since the chart so calibrated detected no 5\% damage at all in our experiments.
 
-PHASE addresses this by replacing the threshold with a betting e-process whose guarantee holds at every instant of an unbounded campaign, \rev{conditionally on a bound for the expected score of an undamaged structure}, and by using eigenvalue perturbation in four distinct roles: constraining the nuisance surrogate, restricting the alternative to a polyhedral damage cone, determining which stiffness-loss patterns are identifiable relative to the nuisance, and protecting identifiable damage from online adaptation. Across \rev{3{,}600 simulated records} it raised no false alarm on 300 undamaged structures at either a one- or a three-year horizon \rev{(upper 95\% limit 1.2\% in each)}, detected 5\% single-storey stiffness loss at storey~3 in every record within a median of 59 days \rev{(and 2\% loss in a third of records)}, localised damage correctly at storeys 3 and 6 but not at storey~1, and remained silent under a benign stiffening event that an otherwise identical omnibus detector flagged in every record. \rev{The observed false-alarm control belongs to the implemented, empirically calibrated rule; the theorem covers the conditional statement, and the provably calibrated variant has little power. Damage that starts after a long healthy period is detected more slowly and less often, and a restart variant that removes most of that penalty exceeded the nominal false-alarm level.}
+PHASE addresses this by replacing the threshold with a betting e-process whose guarantee holds at every instant of an unbounded campaign, \rev{conditionally on a bound for the expected score of an undamaged structure}, and by using eigenvalue perturbation in four distinct roles: constraining the nuisance surrogate, restricting the alternative to a polyhedral damage cone, determining which stiffness-loss patterns are identifiable relative to the nuisance, and protecting identifiable damage from online adaptation. \rev{The evidence for the four roles differs: the physics-derived cone added power beyond a plain sign restriction (and that comparison survives errors of 10--20\% in the twin), the physics-structured surrogate helped only when commissioning was short, the detectability map predicted neither detection nor localisation reliably, and withholding identifiable damage from adaptation showed no measurable effect over the horizons simulated.} Across \rev{4{,}000 simulated records} it raised no false alarm on 300 undamaged structures at either a one- or a three-year horizon \rev{(upper 95\% limit 1.2\% in each)}, detected 5\% single-storey stiffness loss at storey~3 in every record within a median of 59 days \rev{(and 2\% loss in a third of records)}, localised damage correctly at storeys 3 and 6 but not at storey~1, and remained silent under a benign stiffening event that an otherwise identical omnibus detector flagged in every record. \rev{The observed false-alarm control belongs to the implemented, empirically calibrated rule; the theorem covers the conditional statement, and the provably calibrated variant has little power. Damage that starts after a long healthy period is detected more slowly and less often, and a restart variant that removes most of that penalty exceeded the nominal false-alarm level.}
 
 On real measurements from the Z24 bridge \rev{the data support two narrow conclusions}: a monitor commissioned within a single test day false-alarms on the next undamaged day, and when the pier settlement was reversed and the bridge recovered stiffness, PHASE stayed silent in all 200 orderings while every omnibus detector reported damage in all of them. \rev{Its response to settlement depends on how commissioning epochs are ordered and is not evidence of separation between damage and environment.}
 
