@@ -15,12 +15,12 @@ SCEN = ['storey3_2', 'storey3_5', 'storey3_10', 'gradual_6',
         'storey1_5', 'storey6_5', 'stiffening']
 LBL = {'phase_d': 'PHASE', 'phase_e': 'PHASE-E', 'phase': 'PHASE-ND',
        'phase_omni': 'PHASE-$\\Omega$', 'phase_bb': 'PHASE-BB', 'phase_c': 'PHASE-C',
-       'chart3': '3$\\sigma$ chart', 'chart_cal': 'calibrated chart',
-       'cusum': 'CUSUM (oracle)', 'hotelling': 'repeated $T^2$',
-       'pca': 'PCA-EOV chart', 'msd': 'Mahalanobis index', 'ewma': 'EWMA (oracle)',
-       'sr': 'Shiryaev--Roberts', 'ctm': 'conformal martingale',
-       'ctm_f': 'conformal (full calib.)', 'phase_r': 'PHASE-R'}
-ORDER = ['phase_d', 'phase_r', 'phase_c', 'phase', 'phase_omni', 'phase_bb', 'phase_e', 'ctm', 'ctm_f',
+       'phase_r': 'PHASE-R', 'phase_na': 'PHASE-NA', 'phase_orth': 'PHASE-S',
+       'chart3': '$3\\sigma$ chart', 'chart_cal': 'calibrated chart',
+       'cusum': 'CUSUM', 'hotelling': 'repeated $T^2$',
+       'pca': 'PCA-EOV chart', 'msd': 'Mahalanobis index', 'ewma': 'EWMA',
+       'sr': 'Shiryaev--Roberts', 'ctm': 'CTM', 'ctm_f': 'CTM-F'}
+ORDER = ['phase_d', 'phase_r', 'phase_c', 'phase_na', 'phase_orth', 'phase', 'phase_omni', 'phase_bb', 'phase_e', 'ctm', 'ctm_f',
          'cusum', 'sr', 'ewma', 'chart_cal', 'msd', 'pca', 'chart3', 'hotelling']
 
 
@@ -34,6 +34,7 @@ scen = {s: L('scen%d' % k) for k, s in enumerate(SCEN)}
 TBS = (120, 240, 480, 720, 960, 1200, 1460)
 burn = {tb: L('burn%d' % tb) for tb in TBS}
 late = L('late')
+twin = L('twin')
 r3s = L('rate3s')
 from scipy.stats import beta as _beta
 res = {}
@@ -104,6 +105,9 @@ res['assumption'] = dict(
     frac_blockmax_above_delta=float(np.mean(
         [(d['excess_blockmax'] is not None) and d['excess_blockmax'] > dd
          for d, dd in zip(dg, dl)])),
+    frac_blocks_above_delta=float(np.mean(
+        [b > dd for d, dd in zip(dg, dl) for b in d['excess_blocks']])),
+    n_blocks=int(sum(len(d['excess_blocks']) for d in dg)),
     acf1_med=float(np.median([d['acf1'] for d in dg])),
     acf1_q=[float(np.quantile([d['acf1'] for d in dg], q)) for q in (.1, .9)])
 
@@ -197,6 +201,23 @@ for tb, d in burn.items():
                       med=float(np.median(b[det] - T_STAR)) if det.any() else None)
     res['commissioning'][tb] = row
 
+# ---------------------------------------------------- twin-error experiment
+res['twin'] = {}
+for key, d in twin.items():
+    n = d['reps']; row = {}
+    healthy = key.endswith('healthy')
+    for m in ORDER:
+        a = np.array(d['alarms'][m])
+        if healthy:
+            k = int((a >= 0).sum()); row[m] = dict(k=k, n=n, ci=cp(k, n))
+        else:
+            kd = int((a >= T_STAR).sum()); kp = int(((a >= 0) & (a < T_STAR)).sum())
+            dl_ = a[a >= T_STAR] - T_STAR
+            row[m] = dict(k=kd, n=n, ci=cp(kd, n), n_pre=kp,
+                          med=float(np.median(dl_)) if len(dl_) else None)
+    row['delta_mean'] = float(np.mean([x for x in d['delta']]))
+    res['twin'][key] = row
+
 # ---------------------------------------------------- 3-sigma trigger rates
 rows = r3s['rows']
 res['rate3s'] = dict(
@@ -253,10 +274,11 @@ ax[2, 0].set_ylim(-12, 14); ax[2, 1].set_ylim(-12, 14)
 fig.tight_layout(); fig.savefig('fig_records.png'); plt.close(fig)
 
 # --- Fig 3: FWER vs monitoring horizon
-fig, ax = plt.subplots(figsize=(4.4, 3.1))
+fig, ax = plt.subplots(figsize=(5.4, 3.1))
 grid = np.arange(1, T_LONG - T_BURN, 20)
-for m, st in [('phase_d', '-'), ('ctm', '-.'), ('chart_cal', '--'),
-              ('pca', ':'), ('cusum', '-'), ('chart3', '-'), ('hotelling', '--')]:
+for m, st in [('phase_d', '-'), ('phase_r', '-'), ('ctm', '-.'), ('ctm_f', ':'),
+              ('chart_cal', '--'), ('pca', ':'), ('cusum', '-'), ('chart3', '-'),
+              ('hotelling', '--')]:
     a = alL[m]
     cur = np.array([np.mean((a >= 0) & (a - T_BURN <= g)) for g in grid])
     ax.plot(days(grid), np.maximum(cur, 4.5e-4), st, lw=1.2, label=LBL[m])
@@ -268,8 +290,8 @@ ax.text(372, 3.0e-3, 'calibration horizon', fontsize=6, color='0.4', rotation=90
 
 ax.set_xlabel('monitoring horizon (days)')
 ax.set_ylabel('family-wise false-alarm probability')
-ax.legend(fontsize=6.5, ncol=2, loc='center right')
-fig.tight_layout(); fig.savefig('fig_fwer.png'); plt.close(fig)
+ax.legend(fontsize=6.5, ncol=1, loc='upper left', bbox_to_anchor=(1.02, 1.0), frameon=False)
+fig.tight_layout(); fig.savefig('fig_fwer.png', bbox_inches='tight'); plt.close(fig)
 
 # --- Fig 4: detection delay
 fig, ax = plt.subplots(1, 2, figsize=(7.2, 2.9))

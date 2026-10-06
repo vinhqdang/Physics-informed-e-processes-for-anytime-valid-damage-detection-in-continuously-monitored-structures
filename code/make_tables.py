@@ -10,7 +10,7 @@ S = json.load(open('summary.json'))
 os.makedirs('tables', exist_ok=True)
 NAME = {'phase_d': 'PHASE', 'phase_c': 'PHASE-C', 'phase_r': 'PHASE-R', 'phase_e': 'PHASE-E',
         'phase_omni': 'PHASE-$\\Omega$', 'phase_bb': 'PHASE-BB', 'phase': 'PHASE-ND',
-        'ctm': 'CTM', 'ctm_f': 'CTM-F', 'cusum': 'CUSUM', 'sr': 'Shiryaev--Roberts',
+        'ctm': 'CTM', 'ctm_f': 'CTM-F', 'phase_na': 'PHASE-NA', 'phase_orth': 'PHASE-S', 'cusum': 'CUSUM', 'sr': 'Shiryaev--Roberts',
         'ewma': 'EWMA', 'chart_cal': 'Calibrated chart (oracle)',
         'msd': 'Mahalanobis novelty index', 'pca': 'PCA-EOV chart',
         'chart3': '$3\\sigma$ chart', 'hotelling': 'Repeated $T^2$ test'}
@@ -97,7 +97,7 @@ def late_table():
     for sc, lab in [('storey3_5', '5\\% storey 3'), ('storey3_2', '2\\% storey 3'),
                     ('storey3_10', '10\\% storey 3'), ('stiffening', 'Benign stiffening')]:
         r = S['late'][sc]
-        for m in ('phase_d', 'phase_r', 'phase_c'):
+        for m in ('phase_d', 'phase_r', 'phase_c', 'ctm_f', 'cusum'):
             p = r[m]
             med = '---' if p['med'] is None else '%.0f (%.0f--%.0f)' % (p['med'] / 4, p['q25'] / 4, p['q75'] / 4)
             L.append('%s & %s & %d/%d [%s, %s] & %s & %d \\\\' % (
@@ -116,6 +116,48 @@ def nuisance_table():
         L.append('%s & %d & %d & %s & %.3f \\\\' % (
             nm, v['dim'], v['modes_left'], ' & '.join('%.2f' % x for x in v['retention']),
             min(v['retention'])))
+    return '\n'.join(L)
+
+
+def ablation_table():
+    ms = ['phase_d', 'phase_orth', 'phase_na', 'phase_omni']
+    L = []
+    for sc, lab in [('storey3_2', '2\\%% storey 3'), ('storey3_5', '5\\%% storey 3'),
+                    ('storey3_10', '10\\%% storey 3'), ('gradual_6', 'Gradual 6\\%%'),
+                    ('storey1_5', '5\\%% storey 1'), ('storey6_5', '5\\%% storey 6'),
+                    ('stiffening', 'Benign stiffening')]:
+        cells = []
+        for m in ms:
+            p = S['scenarios'][sc][m]
+            cells.append('%.2f / ---' % p['det_rate'] if p['med'] is None
+                         else '%.2f / %.0f' % (p['det_rate'], p['med'] / 4))
+        L.append('%s & %s \\\\' % (lab, ' & '.join(cells)))
+    r = S['late']['storey3_5']
+    cells = []
+    for m in ms:
+        p = r[m]
+        cells.append('%.2f / ---' % p['det_rate'] if p['med'] is None
+                     else '%.2f / %.0f' % (p['det_rate'], p['med'] / 4))
+    L.append('Late onset, 5\\%% storey 3 & %s \\\\' % ' & '.join(cells))
+    L.append('\\midrule')
+    cells = []
+    for m in ms:
+        cells.append('%d/300 ; %d/300' % (S['fwer_2y'][m]['k'], S['fwer_4y'][m]['k']))
+    L.append('False alarms, 1-year ; 3-year & %s \\\\' % ' & '.join(cells))
+    return '\n'.join(L)
+
+
+def twin_table():
+    ms = ['phase_d', 'phase_bb', 'phase_omni', 'phase_na', 'ctm_f', 'cusum']
+    L = []
+    for lvl, lab in (('10', '10\\%% stiffness, 5\\%% mass'), ('20', '20\\%% stiffness, 10\\%% mass')):
+        h = S['twin'][lvl + '_healthy']; d = S['twin'][lvl + '_storey3_5']
+        cells = []
+        for m in ms:
+            pf = h[m]; pd = d[m]
+            med = '---' if pd['med'] is None else '%.0f' % (pd['med'] / 4)
+            cells.append('%d / %d / %s' % (pf['k'], pd['k'], med))
+        L.append('%s & %s \\\\' % (lab, ' & '.join(cells)))
     return '\n'.join(L)
 
 
@@ -141,7 +183,8 @@ def z24_table():
 if __name__ == '__main__':
     out = dict(fwer=fwer_table(), delay_detail=delay_detail(), delay_compare=delay_compare(),
                burn=burn_table(), late=late_table(), nuisance=nuisance_table(),
-               z24=z24_table() if os.path.exists('z24_pool.json') else '')
+               z24=z24_table() if os.path.exists('z24_pool.json') else '',
+               ablation=ablation_table(), twin=twin_table())
     for k, v in out.items():
         open('tables/%s.tex' % k, 'w').write(v + '\n')
         print('=== ', k); print(v)

@@ -9,7 +9,7 @@ T_LATE = 4745            # late onset: year 3.25 of a four-year record
 R_CAL, R_H, R_D, R_SW, R_LONG = 150, 300, 150, 100, 100
 METHODS = ['phase_d', 'phase_e', 'phase', 'phase_omni', 'phase_bb',
            'chart3', 'chart_cal', 'cusum', 'hotelling',
-           'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f', 'phase_r']
+           'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f', 'phase_r', 'phase_na', 'phase_orth']
 EXTRA = ['pca', 'msd', 'ewma', 'sr']
 SCEN = ['storey3_2', 'storey3_5', 'storey3_10', 'gradual_6',
         'storey1_5', 'storey6_5', 'stiffening']
@@ -37,7 +37,7 @@ def sweep(scenario, reps, seed0, T=T_REC, t_burn=MO.T_BURN, h=None, hx=None,
                           h_chart=None if h is None else h[0],
                           h_cusum=None if h is None else h[1])
         diag.append({k: o[k] for k in ('delta_c', 'loc_at_alarm', 'x_burn_mean',
-                                       'x_mon_mean', 'excess_blockmax', 'acf1',
+                                       'x_mon_mean', 'excess_blockmax', 'excess_blocks', 'acf1',
                                        'onset')})
         for m in METHODS:
             rows[m].append(o['alarms'][m])
@@ -139,6 +139,30 @@ def main(stage):
                 sc, det.mean(), np.median(a[det] - T_LATE) if det.any() else None,
                 ((a >= 0) & (a < T_LATE)).mean()))
         save('late', out)
+    elif stage == 'twin':
+        import twin
+        c = load('calib')
+        out = {}
+        for lvl, (ks, ms) in {'10': (0.10, 0.05), '20': (0.20, 0.10)}.items():
+            for sc, base in (('healthy', 950000), ('storey3_5', 960000)):
+                rows = {m: [] for m in METHODS}
+                dlt = []
+                for r in range(100):
+                    rng_d = np.random.default_rng(base + 10000 * int(lvl) + 7 * r)
+                    ref = twin.perturbed_reference(rng_d, ks, ms)
+                    rng = np.random.default_rng(base + 1000 * int(lvl) + r)
+                    rec = M.simulate(rng, T_REC, sc, t_star=T_STAR)
+                    with twin.patched_design(ref):
+                        o = MO.run_record(rec, h_extra=c['h_extra'], t_onset=T_STAR,
+                                          h_chart=c['h_chart'], h_cusum=c['h_cusum'])
+                    for m in METHODS:
+                        rows[m].append(o['alarms'][m])
+                    dlt.append(o['delta'])
+                out['%s_%s' % (lvl, sc)] = dict(alarms=rows, delta=dlt, reps=100)
+                a = np.array(rows['phase_d'])
+                print(lvl, sc, 'phase fa/det', ((a >= 0) & (a < (T_STAR if sc != 'healthy' else 0))).sum() if sc != 'healthy' else (a >= 0).mean(),
+                      (a >= T_STAR).mean() if sc != 'healthy' else '', flush=True)
+        save('twin', out)
     elif stage == 'rate3s':
         # spurious-trigger rate of the 3-sigma chart under an inspect-and-resume rule
         out = dict(lockouts=[1, 4, 28], reps=60, rows=[])

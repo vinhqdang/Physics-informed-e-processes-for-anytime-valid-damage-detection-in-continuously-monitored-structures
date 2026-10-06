@@ -14,6 +14,7 @@ Ablations (PHASE-Omega: no cone; PHASE-BB: black-box surrogate) and conventional
 baselines (fixed 3-sigma chart, horizon-calibrated chart, CUSUM, repeated
 Hotelling test) share the same residual stream wherever possible.
 """
+import copy
 import numpy as np
 from scipy.stats import chi2
 import model as M
@@ -68,6 +69,21 @@ def omni_null_mean(m, c, n_mc=400_000, seed=8):
     return float(np.minimum(np.linalg.norm(e, axis=1) / c, 1.0).mean())
 
 
+def orth_generators(m=M.N_MODES, pair_weights=(0.25, 0.5, 0.75)):
+    """Generators of the plain non-positive orthant (sign restriction only, no
+    physics-derived directions): singletons, weighted pairs and the all-modes
+    direction, in standardised residual space."""
+    E = np.eye(m)
+    gens = [-E[j] for j in range(m)]
+    for j in range(m):
+        for k in range(j + 1, m):
+            for w in pair_weights:
+                gens.append(-(w * E[j] + (1 - w) * E[k]))
+    gens.append(-np.ones(m) / np.sqrt(m))
+    Vm = np.array(gens)
+    return Vm / np.linalg.norm(Vm, axis=1, keepdims=True)
+
+
 SIGMA_D = M.SIG_F.copy()
 V, SUPPORT = cone_generators(M.REF['S'], SIGMA_D)
 P_PERP = nuisance_projector(SIGMA_D)
@@ -77,9 +93,12 @@ VT = _VT[_n > 1e-8] / _n[_n > 1e-8, None]        # identifiable cone directions
 DET_RETENTION = (np.linalg.norm(P_PERP @ (-M.REF['S'] / SIGMA_D[:, None]), axis=0)
                  / np.linalg.norm(-M.REF['S'] / SIGMA_D[:, None], axis=0))
 MU0, MU0_SE = score_null_mean(V, C_SCALE)
+V_ORTH = orth_generators()
+MU0_ORTH, _ = score_null_mean(V_ORTH, C_SCALE, seed=9)
 MU0_OMNI = omni_null_mean(M.N_MODES, C_OMNI)
 LAMS = np.geomspace(0.05, 0.9 / MU0, N_LAM)
 LAMS_OMNI = np.geomspace(0.05, 0.9 / MU0_OMNI, N_LAM)
+LAMS_ORTH = np.geomspace(0.05, 0.9 / MU0_ORTH, N_LAM)
 CHI2_C = chi2.ppf(1 - ALPHA, M.N_MODES)
 SUP_MAT = np.zeros((V.shape[0], M.N_STOREY))
 for _i, _s in enumerate(SUPPORT):
@@ -181,11 +200,16 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         bb.update(dT[t], q[t], y[t])
     sig_pi = _robust_scale(np.array(rA_pi[len(rA_pi) // 3:]))
     sig_bb = _robust_scale(np.array(rA_bb[len(rA_bb) // 3:]))
+    pi_na = copy.deepcopy(pi)        # ablation: adaptation without withholding
 
     # ---- commissioning pass B: monitoring update rule; calibrate delta
-    xb, xob, xbb = [], [], []
+    xb, xob, xbb, xna, xor_ = [], [], [], [], []
     for t in range(half, t_burn):
         r = (y[t] - pi.predict(dT[t], q[t])) / sig_pi
+        r_na = (y[t] - pi_na.predict(dT[t], q[t])) / sig_pi
+        xna.append(min(max((r_na @ V.T).max(), 0.0) / C_SCALE, 1.0))
+        xor_.append(min(max((r @ V_ORTH.T).max(), 0.0) / C_SCALE, 1.0))
+        pi_na.update(dT[t], q[t], y[t] - sig_pi * (r_na - np.clip(r_na, -HUBER, HUBER)))
         rb = (y[t] - bb.predict(dT[t], q[t])) / sig_bb
         xb.append(min(max((r @ V.T).max(), 0.0) / C_SCALE, 1.0))
         xob.append(min(np.linalg.norm(r) / C_OMNI, 1.0))
@@ -210,11 +234,16 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
                   + np.sqrt(np.log(1.0 / EPS_CAL) / (2.0 * len(xb_arr))))
     delta_o = _delta(xob, MU0_OMNI)
     delta_b = _delta(xbb, MU0)
+    delta_na = _delta(xna, MU0)
+    delta_or = _delta(xor_, MU0_ORTH)
 
     # ---- monitoring
     logthr = np.log(1.0 / alpha)
     lw = np.zeros(N_LAM); lwd = np.zeros(N_LAM); lwe = np.zeros(N_LAM)
     lwo = np.zeros(N_LAM); lwb = np.zeros(N_LAM); lwc = np.zeros(N_LAM)
+    lwna = np.zeros(N_LAM); lwor = np.zeros(N_LAM)
+    disc_na = np.log1p(LAMS * delta_na)
+    disc_or = np.log1p(LAMS_ORTH * delta_or)
     n_in = 0
     disc_c = np.log1p(LAMS * delta_c)
     # PHASE-R: mixture over start times of the discounted evidence process, so that
@@ -231,7 +260,7 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
     loc = np.zeros(M.N_STOREY)
     keys = ('phase_d', 'phase_e', 'phase', 'phase_omni', 'phase_bb',
             'chart3', 'chart_cal', 'cusum', 'hotelling',
-            'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f', 'phase_r')
+            'pca', 'msd', 'ewma', 'sr', 'ctm', 'phase_c', 'ctm_f', 'phase_r', 'phase_na', 'phase_orth')
     alarms = {k: -1 for k in keys}
     stat_max = {'chart': 0.0, 'cusum': 0.0, 'pca': 0.0, 'msd': 0.0,
                 'ewma': 0.0, 'sr': 0.0}
@@ -285,6 +314,11 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
         x = min(u / C_SCALE, 1.0)
         xo = min(np.linalg.norm(r) / C_OMNI, 1.0)
         xbn = min(max((rb @ V.T).max(), 0.0) / C_SCALE, 1.0)
+        r_na = (y[t] - pi_na.predict(dT[t], q[t])) / sig_pi
+        x_na = min(max((r_na @ V.T).max(), 0.0) / C_SCALE, 1.0)
+        x_or = min(max((r @ V_ORTH.T).max(), 0.0) / C_SCALE, 1.0)
+        lwna += np.log1p(LAMS * (x_na - MU0)) - disc_na
+        lwor += np.log1p(LAMS_ORTH * (x_or - MU0_ORTH)) - disc_or
 
         in_env = (env_lo <= dT[t] <= env_hi) and (q[t] <= q_hi)
         if in_env:
@@ -344,6 +378,8 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
             alarms['phase_d'] = t
             loc_at_alarm = int(np.argmax(loc))
         if alarms['phase_r'] < 0 and L_r >= logthr: alarms['phase_r'] = t
+        if alarms['phase_na'] < 0 and mix(lwna) >= logthr: alarms['phase_na'] = t
+        if alarms['phase_orth'] < 0 and mix(lwor) >= logthr: alarms['phase_orth'] = t
         if alarms['phase_c'] < 0 and Lpc >= np.log(1.0 / (alpha - EPS_CAL)):
             alarms['phase_c'] = t
         if alarms['phase_e'] < 0 and Lpe >= logthr: alarms['phase_e'] = t
@@ -370,6 +406,7 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
 
         pi.update(dT[t], q[t], _filtered_target(y[t], sig_pi, r))
         bb.update(dT[t], q[t], _filtered_target(y[t], sig_bb, rb))
+        pi_na.update(dT[t], q[t], y[t] - sig_pi * (r_na - np.clip(r_na, -HUBER, HUBER)))
 
     xm = np.asarray(xs_mon)
     blk = 360                                    # 90-day blocks
@@ -377,10 +414,11 @@ def run_record(rec, h_chart=None, h_cusum=None, cusum_k=0.05, alpha=ALPHA,
     blockmax = (float(max(xm[i * blk:(i + 1) * blk].mean() for i in range(nb)) - MU0)
                 if nb else None)
     acf1 = float(np.corrcoef(xm[:-1], xm[1:])[0, 1])
+    excess_blocks = [float(xm[i * blk:(i + 1) * blk].mean() - MU0) for i in range(nb)]
     out = dict(alarms=alarms, stat_max=stat_max, delta=delta, delta_o=delta_o,
                delta_c=float(delta_c), loc_at_alarm=loc_at_alarm,
                x_burn_mean=float(xb_arr.mean()), x_mon_mean=float(xm.mean()),
-               excess_blockmax=blockmax, acf1=acf1,
+               excess_blockmax=blockmax, excess_blocks=excess_blocks, acf1=acf1,
                onset=(None if onset_state is None else dict(
                    lw=onset_state[0].tolist(), mix=float(onset_state[1]),
                    g=(gacc / max(gn, 1)).tolist(), n=gn)),
