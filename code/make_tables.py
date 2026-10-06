@@ -161,6 +161,24 @@ def twin_table():
     return '\n'.join(L)
 
 
+def kw51_table():
+    d = json.load(open('kw51_results.json'))
+    import collections
+    lab = {'lin': 'temperature (linear)', 'quad': 'temperature (quadratic)',
+           'env': 'temperature, humidity, wind', 'frz': 'as above, freezing hinge (post hoc)'}
+    L = []
+    for agg in ('hourly', 'daily'):
+        L.append('\\multicolumn{6}{l}{\\textit{%s epochs}}\\\\' % agg)
+        for kind in ('lin', 'quad', 'env', 'frz'):
+            cells = []
+            for m in ('phase', 'phase_c', 'phase_omni', 'ctm_f', 'chart3'):
+                c = collections.Counter(r['cls'][m] for r in d['runs'] if r['agg'] == agg and r['kind'] == kind)
+                cells.append('%d/%d/%d/%d' % (c['before works (false alarm)'], c['during works'],
+                                               c['after works'], c['none']))
+            L.append('%s & %s \\\\' % (lab[kind], ' & '.join(cells)))
+    return '\n'.join(L)
+
+
 def z24_table():
     d = json.load(open('z24_sensitivity.json'))
     pool = json.load(open('z24_pool.json'))['runs']
@@ -184,7 +202,7 @@ if __name__ == '__main__':
     out = dict(fwer=fwer_table(), delay_detail=delay_detail(), delay_compare=delay_compare(),
                burn=burn_table(), late=late_table(), nuisance=nuisance_table(),
                z24=z24_table() if os.path.exists('z24_pool.json') else '',
-               ablation=ablation_table().replace('%%','%'), twin=twin_table().replace('%%','%'))
+               ablation=ablation_table().replace('%%','%'), kw51=kw51_table() if os.path.exists('kw51_results.json') else '', twin=twin_table().replace('%%','%'))
     for k, v in out.items():
         open('tables/%s.tex' % k, 'w').write(v + '\n')
         print('=== ', k); print(v)

@@ -157,6 +157,10 @@ def damage_profile(T, scenario, t_star):
         rho[t_star:, j] = float(lvl) / 100.0
     elif scenario == 'stiffening':
         rho[t_star:, :] = -0.03                     # temporary propping: NOT damage
+    elif scenario == 'stiffdam':
+        # persistent 3% stiffening from t_star, then a 5% loss at storey 3 180 days later
+        rho[t_star:, :] = -0.03
+        rho[t_star + 720:, 2] = 1.0 - 1.03 * 0.95
     else:
         raise ValueError(scenario)
     return rho

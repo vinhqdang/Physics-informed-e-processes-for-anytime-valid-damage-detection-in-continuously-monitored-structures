@@ -26,14 +26,14 @@ def load(name):
 
 
 def sweep(scenario, reps, seed0, T=T_REC, t_burn=MO.T_BURN, h=None, hx=None,
-          t_star=T_STAR):
+          t_star=T_STAR, t_onset=None):
     rows = {m: [] for m in METHODS}
     loc, dlt, cov, smax = [], [], [], []
     diag = []
     for r in range(reps):
         rng = np.random.default_rng(seed0 + r)
         rec = M.simulate(rng, T, scenario, t_star=t_star)
-        o = MO.run_record(rec, t_burn=t_burn, h_extra=hx, t_onset=t_star,
+        o = MO.run_record(rec, t_burn=t_burn, h_extra=hx, t_onset=(t_star if t_onset is None else t_onset),
                           h_chart=None if h is None else h[0],
                           h_cusum=None if h is None else h[1])
         diag.append({k: o[k] for k in ('delta_c', 'loc_at_alarm', 'x_burn_mean',
@@ -163,6 +163,19 @@ def main(stage):
                 print(lvl, sc, 'phase fa/det', ((a >= 0) & (a < (T_STAR if sc != 'healthy' else 0))).sum() if sc != 'healthy' else (a >= 0).mean(),
                       (a >= T_STAR).mean() if sc != 'healthy' else '', flush=True)
         save('twin', out)
+    elif stage == 'stiffdam':
+        c = load('calib')
+        t2 = T_STAR + 720                      # time of the damage in both scenarios
+        out = {}
+        out['stiffdam'] = sweep('stiffdam', R_LONG, 970000, T=T_LONG, t_star=T_STAR, t_onset=t2,
+                                h=(c['h_chart'], c['h_cusum']), hx=c['h_extra'])
+        out['plain'] = sweep('storey3_5', R_LONG, 980000, T=T_LONG, t_star=t2, t_onset=t2,
+                             h=(c['h_chart'], c['h_cusum']), hx=c['h_extra'])
+        for k, d in out.items():
+            a = np.array(d['alarms']['phase_d'])
+            print(k, 'det', (a >= t2).mean(), 'pre', ((a >= 0) & (a < t2)).mean(),
+                  'med', np.median(a[a >= t2] - t2) if (a >= t2).any() else None, flush=True)
+        save('stiffdam', out)
     elif stage == 'rate3s':
         # spurious-trigger rate of the 3-sigma chart under an inspect-and-resume rule
         out = dict(lockouts=[1, 4, 28], reps=60, rows=[])
