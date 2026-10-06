@@ -165,11 +165,12 @@ def kw51_table():
     d = json.load(open('kw51_results.json'))
     import collections
     lab = {'lin': 'temperature (linear)', 'quad': 'temperature (quadratic)',
-           'env': 'temperature, humidity, wind', 'frz': 'as above, freezing hinge (post hoc)'}
+           'env': 'temperature, humidity, wind', 'frz': 'as above, freezing hinge (post hoc)',
+           'dyn': '24 h/72 h temperature means, hinge (post hoc)', 'rbf': 'random Fourier features (post hoc)'}
     L = []
     for agg in ('hourly', 'daily'):
         L.append('\\multicolumn{6}{l}{\\textit{%s epochs}}\\\\' % agg)
-        for kind in ('lin', 'quad', 'env', 'frz'):
+        for kind in ('lin', 'quad', 'env', 'frz', 'dyn', 'rbf'):
             cells = []
             for m in ('phase', 'phase_c', 'phase_omni', 'ctm_f', 'chart3'):
                 c = collections.Counter(r['cls'][m] for r in d['runs'] if r['agg'] == agg and r['kind'] == kind)

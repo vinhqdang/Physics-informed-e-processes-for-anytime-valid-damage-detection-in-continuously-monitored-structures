@@ -85,7 +85,7 @@ z24_modal.py, delete the .npz files, and run `python3 z24_modal.py`.
 |---|---|
 | kw51_experiment.py | PHASE (reduced: regression surrogate, orthant cone) and comparators on the KW51 tracked-mode data; `--download` fetches trackedmodes.zip from Zenodo record 3745914 (CC BY-NC-SA 4.0; not redistributed here) |
 | kw51_figure.py | draws fig_kw51.png |
-| kw51_results.json | all 120 commissioning configurations (2 epoch lengths x 4 surrogates x 15 windows) and the evidence paths of the plotted configurations |
+| kw51_results.json | all 180 commissioning configurations (2 epoch lengths x 6 surrogates x 15 windows) and the evidence paths of the plotted configurations |
 
     cd code && python3 kw51_experiment.py --download && python3 kw51_experiment.py   # about 3 minutes
 
