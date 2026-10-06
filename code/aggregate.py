@@ -218,6 +218,21 @@ for key, d in twin.items():
     row['delta_mean'] = float(np.mean([x for x in d['delta']]))
     res['twin'][key] = row
 
+# ---------------------------------------------------- benign change followed by damage
+import os
+if os.path.exists('part_stiffdam.json'):
+    sd = L('stiffdam'); t2 = T_STAR + 720
+    res['stiffdam'] = {}
+    for key, d in sd.items():
+        n = d['reps']; row = {}
+        for m in ORDER:
+            a_ = np.array(d['alarms'][m])
+            det = a_ >= t2; pre = (a_ >= 0) & (a_ < t2)
+            row[m] = dict(n=n, k=int(det.sum()), ci=cp(int(det.sum()), n), n_pre=int(pre.sum()),
+                          med=float(np.median(a_[det] - t2)) if det.any() else None,
+                          pre_med=float(np.median(a_[pre] - T_STAR)) if pre.any() else None)
+        res[ 'stiffdam'][key] = row
+
 # ---------------------------------------------------- 3-sigma trigger rates
 rows = r3s['rows']
 res['rate3s'] = dict(

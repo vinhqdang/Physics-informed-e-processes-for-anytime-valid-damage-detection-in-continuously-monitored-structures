@@ -39,7 +39,7 @@ folder. Revised text appears in blue; the clean version has no colour:
 
 Stages, with fixed seeds: `geometry`, `calib`, `healthy`, `scen0`..`scen6`,
 `long`, `long1`, `long2`, `burn120`, `burn240`, `burn480`, `burn720`,
-`burn960`, `burn1200`, `burn1460`, `late` (late damage onset), `twin` (digital-twin error), `rate3s`
+`burn960`, `burn1200`, `burn1460`, `late` (late damage onset), `twin` (digital-twin error), `stiffdam` (benign stiffening then damage), `rate3s`
 (trigger rate of the 3-sigma chart), `paths`, for example `python3 stage.py calib`.
 Run `geometry` and `calib` first. The full study takes roughly an hour on four
 cores. The intermediate part_*.json files are not shipped (summary.json holds
@@ -49,7 +49,7 @@ version 1 exactly for every monitor that existed there.
 
 Record accounting: 150 calibration + 300 healthy two-year + 300 healthy
 four-year + 7 x 150 damage scenarios + 7 x 200 commissioning sweep + 4 x 100
-late-onset + 4 x 100 twin-error = 4,000 records (3,300 two-year, 700 four-year), plus three records
+late-onset + 4 x 100 twin-error + 2 x 100 benign-change-then-damage = 4,200 records (3,300 two-year, 900 four-year), plus three records
 drawn for the illustrative figure.
 
 ## Z24 bridge study (code/)
