@@ -37,6 +37,12 @@ HUBER = 3.0
 FORGET = 0.9995
 N_LAM = 12
 EPS_CAL = ALPHA / 2
+N_RFF = 40
+_rng = np.random.default_rng(11)
+RFF_W = _rng.normal(0.0, 0.7, (N_RFF, 4))       # bandwidth fixed a priori (length scale about 1.4 sd)
+RFF_B = _rng.uniform(0.0, 2 * np.pi, N_RFF)
+Z_MU = np.array([8.0, 8.0, 80.0, 2.0])         # rough centring of (T, T24, RH, ws), fixed a priori
+Z_SD = np.array([6.0, 6.0, 15.0, 1.5])
 WORKS_START = dt.datetime(2019, 5, 13)  # first visible change of the tracked frequencies
 WORKS_END = dt.datetime(2019, 9, 16)    # frequencies settle at their post-retrofit levels
 
@@ -60,7 +66,12 @@ def load(agg='hourly'):
     t = np.array([dt.datetime.fromordinal(int(x)) + dt.timedelta(days=float(x % 1))
                   - dt.timedelta(days=366) for x in d.sdn])
     lab = list(d.labels_env)
-    E = d.env[:, [lab.index('tVL'), lab.index('rhVL'), lab.index('wsVL')]].astype(float)
+    import pandas as pd
+    Tair = pd.Series(d.env[:, lab.index('tVL')].astype(float))
+    T24 = Tair.rolling(24, min_periods=12).mean().to_numpy()     # trailing means: past data only
+    T72 = Tair.rolling(72, min_periods=36).mean().to_numpy()
+    E = np.column_stack([d.env[:, [lab.index('tVL'), lab.index('rhVL'), lab.index('wsVL')]].astype(float),
+                         T24, T72])
     f = d.f[:, MODES]
     ok = np.isfinite(f).all(1) & np.isfinite(E).all(1)
     t, y, E = t[ok], np.log(f[ok]), E[ok]
@@ -103,17 +114,22 @@ class Surrogate:
     def __init__(self, m, kind, forget=FORGET):
         self.kind = kind
         self.forget = forget
-        self.p = {'lin': 2, 'quad': 3, 'env': 5, 'frz': 5}[kind]
+        self.p = {'lin': 2, 'quad': 3, 'env': 5, 'frz': 5, 'dyn': 7, 'rbf': 1 + 4 + N_RFF}[kind]
         self.A = np.eye(self.p) * 1e-6
         self.b = np.zeros((self.p, m))
         self.coef = np.zeros((self.p, m))
 
     def feat(self, E):
-        T, rh, ws = E
+        T, rh, ws, T24, T72 = E
         if self.kind == 'lin':
             return np.array([1.0, T])
         if self.kind == 'quad':
             return np.array([1.0, T, T * T / 10.0])
+        if self.kind == 'dyn':   # thermal inertia: trailing 24 h and 72 h means, freezing hinge on the 24 h mean
+            return np.array([1.0, T, T24, T72, max(0.0, -T24) / 5.0, rh / 100.0, ws])
+        if self.kind == 'rbf':   # smooth nonlinear map of (T, T24, RH, ws): linear terms + random Fourier features
+            z = (np.array([T, T24, rh, ws]) - Z_MU) / Z_SD
+            return np.concatenate([[1.0], z, np.sqrt(2.0 / N_RFF) * np.cos(RFF_W @ z + RFF_B)])
         if self.kind == 'frz':   # post hoc: freezing hinge instead of the quadratic term
             return np.array([1.0, T, max(0.0, -T) / 5.0, rh / 100.0, ws])
         return np.array([1.0, T, T * T / 10.0, rh / 100.0, ws])
@@ -245,7 +261,7 @@ def main():
             out['pre_res_sd_pct'] = (100 * res.std(0)).tolist()
             out['pre_slope_pct_per_C'] = (100 * B[1]).tolist()
         forget = FORGET if agg == 'hourly' else FORGET ** 24
-        for kind in ('lin', 'quad', 'env', 'frz'):
+        for kind in ('lin', 'quad', 'env', 'frz', 'dyn', 'rbf'):
             t0 = dt.datetime(t[0].year, t[0].month, t[0].day)
             for start in (t0, t0 + dt.timedelta(days=14), t0 + dt.timedelta(days=28)):
                 for days in (45, 60, 90, 120, 150):
