@@ -1,7 +1,9 @@
 # PHASE manuscript package (revision)
 
-Manuscript: "Physics-informed e-processes for anytime-valid damage detection in
-continuously monitored structures", submitted to Artificial Intelligence for a
+Manuscript: "Physics-informed e-processes for damage detection under a lifetime
+false-alarm budget in continuously monitored structures" (revised title; first submitted
+as "Physics-informed e-processes for anytime-valid damage detection in continuously
+monitored structures"), submitted to Artificial Intelligence for a
 Sustainable Built Environment (special issue: Physics-Informed AI for
 Infrastructure Resilience). This folder holds the revised version.
 
@@ -9,9 +11,11 @@ Infrastructure Resilience). This folder holds the revised version.
 
 ```
 main.tex, refs.bib          LaTeX source of the revised manuscript (changes shown in blue)
-figures/                    nine figures (PNG)
-code/                       simulation, monitors, experiments, Z24 pipeline
-revision/                   response to reviewers, highlighted and clean PDFs
+figures/                    ten figures (PNG; Figure 10, KW51, also as vector PDF fig_kw51.pdf)
+code/                       simulation, monitors, experiments, Z24 and KW51 pipelines, table generator
+revision/                   responses to the reviewers and editor, highlighted and clean PDFs
+supplementary/              phase_code.zip: the code archive supplied with the submission (Supplementary file S1)
+SUBMISSION_METADATA.txt     title, keywords and file list as they should appear in the submission system
 manuscript_anonymised.pdf   double-blind file as first submitted (version 1)
 ```
 
@@ -23,6 +27,11 @@ folder. Revised text appears in blue; the clean version has no colour:
     pdflatex main && bibtex main && pdflatex main && pdflatex main
     pdflatex -jobname=main_clean "\def\CLEANBUILD{1}\input{main}"     # clean (run the three-pass sequence)
 
+Revised text is blue (first revision) or red (second revision, responding to the editor); the
+clean build has no colour. The responses in `revision/` read their cross-references from the
+manuscript: after building `main`, run `cp main.aux revision/` and then, in `revision/`,
+`pdflatex response_round2` twice (the first-round letter is `response_to_reviewers`).
+
 ## Simulation study (code/)
 
 | File | Role |
@@ -33,9 +42,17 @@ folder. Revised text appears in blue; the clean version has no colour:
 | stage.py | Monte Carlo driver, one stage per call; writes part_*.json |
 | aggregate.py | reads part_*.json, writes summary.json (counts, exact intervals) and the simulation figures |
 | identifiability.py | rank structure, confounded subspace, coherence, nuisance-model sensitivity; writes identifiability.json |
-| make_tables.py | generates the LaTeX table bodies from the json files |
+| make_tables.py | generates the LaTeX table bodies (tables/*.tex) from the json files, including Table 3 (both error measures) and the benign-change-then-damage table |
+| stiffdam_windows.py | reads part_stiffdam.json (written by `python3 stage.py stiffdam`) and writes stiffdam_windows.json: detection counts for the benign-change-then-damage experiment within nine months of the loss and over the whole remaining record (3,295 epochs, 824 days) |
 | schematics.py | draws the pipeline, frame and bridge schematics |
 | summary.json | every number reported for the simulation study |
+
+Where Table 3 (accuracy of the first-order model) is computed: stage `geometry` stores both the
+normalised error (largest absolute error over largest absolute exact shift, `rel_err`) and the maximum
+modal relative error (`max_modal_rel_err`).
+
+Intervals are exact (Clopper-Pearson) and are rounded, not truncated, to two decimals in the tables
+(for example 0/100 gives an upper limit of 0.0362, shown as 0.04).
 
 Stages, with fixed seeds: `geometry`, `calib`, `healthy`, `scen0`..`scen6`,
 `long`, `long1`, `long2`, `burn120`, `burn240`, `burn480`, `burn720`,
@@ -84,7 +101,7 @@ z24_modal.py, delete the .npz files, and run `python3 z24_modal.py`.
 | File | Role |
 |---|---|
 | kw51_experiment.py | PHASE (reduced: regression surrogate, orthant cone) and comparators on the KW51 tracked-mode data; `--download` fetches trackedmodes.zip from Zenodo record 3745914 (CC BY-NC-SA 4.0; not redistributed here) |
-| kw51_figure.py | draws fig_kw51.png |
+| kw51_figure.py | draws Figure 10: fig_kw51.pdf (vector, TrueType fonts embedded, 7.0 in wide, all text 8 pt or larger at that size) and a PNG preview |
 | kw51_results.json | all 180 commissioning configurations (2 epoch lengths x 6 surrogates x 15 windows) and the evidence paths of the plotted configurations |
 
     cd code && python3 kw51_experiment.py --download && python3 kw51_experiment.py   # about 3 minutes
@@ -104,12 +121,18 @@ z24_modal.py, delete the .npz files, and run `python3 z24_modal.py`.
 
 ## Figures
 
-All nine figures are the authors' own work (three schematics and six plots from
+All ten figures are the authors' own work (three schematics and seven plots from
 the experiments); no third-party imagery is used. The figure environment for the
 bridge in main.tex contains a commented-out two-panel block for photographs, if
 rights are later cleared (e.g. Reynders and De Roeck, 2009, DOI
 10.1002/9780470061626.shm165). Emerald requires non-exclusive, worldwide, print
 and electronic rights for the life of the work.
+
+## Availability
+
+The archive `supplementary/phase_code.zip` (Supplementary file S1 of the submission) contains `code/`,
+`figures/fig_kw51.pdf` and this file. The same material is the content of this repository. The raw Z24
+records and the KW51 tracked-mode file are not redistributed (see Data provenance).
 
 ## Environment
 

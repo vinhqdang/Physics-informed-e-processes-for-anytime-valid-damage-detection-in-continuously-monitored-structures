@@ -75,8 +75,12 @@ def main(stage):
                 rows.append(dict(storey=j + 1, level=lvl,
                                  exact=exact.tolist(), first_order=first.tolist(),
                                  max_abs_err=float(np.abs(exact - first).max()),
+                                 # normalised error: largest absolute error / largest absolute exact shift
                                  rel_err=float(np.abs(exact - first).max()
-                                               / np.abs(exact).max())))
+                                               / np.abs(exact).max()),
+                                 # maximum modal relative error: largest of the individual relative errors
+                                 max_modal_rel_err=float((np.abs(exact - first)
+                                                          / np.abs(exact)).max())))
         save('geometry', dict(f0=M.REF['f0'].tolist(), S=M.REF['S'].tolist(),
                               kappa=M.REF['kappa'].tolist(), eta=M.REF['eta'].tolist(),
                               signature_norm=Sn.tolist(),

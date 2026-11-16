@@ -1,0 +1,13 @@
+Manuscript ID: AISBE-08-2026-0041
+Title (current, to be entered in the submission system and used in proofs):
+Physics-informed e-processes for damage detection under a lifetime false-alarm budget in continuously monitored structures
+
+Superseded title (first submission; must not remain in the system metadata):
+Physics-informed e-processes for anytime-valid damage detection in continuously monitored structures
+
+Article classification: Research paper
+Special issue: Physics-Informed AI for Infrastructure Resilience
+Keywords: Structural health monitoring; Anytime-valid inference; E-process; Physics-informed machine learning; Digital twin; Damage detection; False alarms; Infrastructure resilience; Environmental and operational variability; Predictive maintenance
+Abstract: as in the manuscript (Structured abstract, main.tex); the Practical implications field changed in this revision.
+Supplementary file S1: supplementary/phase_code.zip (code, extracted Z24 modal features, KW51 results, reproduction instructions)
+Figure 10: figures/fig_kw51.pdf (vector, fonts embedded, 7.0 in wide, text 8 pt or larger at that size)

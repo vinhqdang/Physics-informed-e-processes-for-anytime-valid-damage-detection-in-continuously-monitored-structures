@@ -20,14 +20,20 @@ def f3(x):
     return '%.3f' % x
 
 
+def f2(x):
+    # two decimals by rounding (an earlier version truncated: f2(x))
+    return '%.2f' % x
+
+
 def cell_rate(d):
     return '%s [%s, %s]' % (f3(d['p']), f3(d['lo']), f3(d['hi']))
 
 
 def fwer_table():
     groups = [('anytime-valid by construction (conditionally)',
-               ['phase_d', 'phase_c', 'phase_r', 'phase_e', 'phase_omni', 'phase_bb', 'phase',
-                'ctm', 'ctm_f']),
+               ['phase_d', 'phase_c', 'phase_r', 'phase_e', 'phase_omni', 'phase_bb', 'phase']),
+              ('conformal comparators: empirical, no established anytime-valid guarantee',
+               ['ctm', 'ctm_f']),
               ('sequential detection, horizon-calibrated oracles', ['cusum', 'sr', 'ewma']),
               ('current SHM practice', ['chart_cal', 'msd', 'pca', 'chart3', 'hotelling'])]
     L = []
@@ -48,12 +54,12 @@ def delay_detail():
         r = S['scenarios'][sc]; p = r['phase_d']
         loc = '%d/%d' % (round(r['loc_det_alarm'] * r['n_loc_det']), r['n_loc_det'])
         L.append('%s & %d/%d & %s [%s, %s] & %s (%s--%s) & %d & %d & %s \\\\' % (
-            lab, p['n_det'], p['n'], f3(p['det_rate'])[:4], f3(p['det_lo'])[:4], f3(p['det_hi'])[:4],
+            lab, p['n_det'], p['n'], f2(p['det_rate']), f2(p['det_lo']), f2(p['det_hi']),
             '%.0f' % (p['med'] / 4), '%.0f' % (p['q25'] / 4), '%.0f' % (p['q75'] / 4),
             p['n_pre'], p['n_undet'], loc))
     r = S['scenarios']['stiffening']; p = r['phase_d']
     L.append('Benign 3\\%% stiffening & %d/%d & %s [%s, %s] & --- & %d & %d & --- \\\\' % (
-        p['n_det'], p['n'], f3(p['det_rate'])[:4], f3(p['det_lo'])[:4], f3(p['det_hi'])[:4],
+        p['n_det'], p['n'], f2(p['det_rate']), f2(p['det_lo']), f2(p['det_hi']),
         p['n_pre'], p['n_undet']))
     return '\n'.join(L)
 
@@ -102,7 +108,40 @@ def late_table():
             med = '---' if p['med'] is None else '%.0f (%.0f--%.0f)' % (p['med'] / 4, p['q25'] / 4, p['q75'] / 4)
             L.append('%s & %s & %d/%d [%s, %s] & %s & %d \\\\' % (
                 lab if m == 'phase_d' else '', NAME[m], p['n_det'], p['n'],
-                f3(p['det_lo'])[:4], f3(p['det_hi'])[:4], med, p['n_pre']))
+                f2(p['det_lo']), f2(p['det_hi']), med, p['n_pre']))
+    return '\n'.join(L)
+
+
+def validation_table():
+    """Table 3: first-order accuracy, panel A normalised error, panel B maximum modal relative error."""
+    rows = S['geometry']['validation']
+    L = []
+    for title, fn in [('A. Normalised error',
+                       lambda e, f: np.abs(f - e).max() / np.abs(e).max()),
+                      ('B. Maximum modal relative error',
+                       lambda e, f: (np.abs(f - e) / np.abs(e)).max())]:
+        L.append('\\multicolumn{4}{l}{\\textit{%s}}\\\\' % title)
+        for lvl in (0.02, 0.05, 0.10):
+            cells = []
+            for st in (1, 3, 6):
+                r = [x for x in rows if x['storey'] == st and abs(x['level'] - lvl) < 1e-9][0]
+                cells.append('%.1f\\%%' % (100 * fn(np.array(r['exact']), np.array(r['first_order']))))
+            L.append('%d\\%% & %s \\\\' % (round(100 * lvl), ' & '.join(cells)))
+        L.append('\\midrule')
+    return '\n'.join(L[:-1])
+
+
+def masked_table():
+    W = json.load(open('stiffdam_windows.json'))
+    L = []
+    for m, nm in [('phase_d', 'PHASE'), ('phase_r', 'PHASE-R'), ('phase_c', 'PHASE-C'),
+                  ('ctm_f', 'CTM-F'), ('cusum', 'CUSUM'), ('phase_omni', 'PHASE-$\\Omega$')]:
+        a, b = W['loss_alone'][m], W['stiffening_then_loss'][m]
+        def c(x):
+            return '%d/%d' % (x['k'], a['n']) + ('' if x['med_days'] is None else ' (%.0f)' % x['med_days'])
+        pre = '---' if b['pre_med_days'] is None else '%.0f' % b['pre_med_days']
+        L.append('%s & %s & %s & %d/%d & %d/%d & %s \\\\' % (
+            nm, c(a['nine_months']), c(a['to_end']), b['to_end']['k'], b['n'], b['n_pre'], b['n'], pre))
     return '\n'.join(L)
 
 
@@ -202,8 +241,10 @@ def z24_table():
 if __name__ == '__main__':
     out = dict(fwer=fwer_table(), delay_detail=delay_detail(), delay_compare=delay_compare(),
                burn=burn_table(), late=late_table(), nuisance=nuisance_table(),
+               validation=validation_table(),
+               masked=masked_table() if os.path.exists('stiffdam_windows.json') else '',
                z24=z24_table() if os.path.exists('z24_pool.json') else '',
                ablation=ablation_table().replace('%%','%'), kw51=kw51_table() if os.path.exists('kw51_results.json') else '', twin=twin_table().replace('%%','%'))
     for k, v in out.items():
         open('tables/%s.tex' % k, 'w').write(v + '\n')
-        print('=== ', k); print(v)
+        print('wrote tables/%s.tex' % k)

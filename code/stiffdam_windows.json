@@ -1,0 +1,263 @@
+{
+ "loss_epoch": 2545,
+ "record_epochs": 5840,
+ "nine_months_epochs": 1095,
+ "remaining_epochs": 3295,
+ "remaining_days": 823.75,
+ "loss_alone": {
+  "phase_d": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 100,
+    "ci": [
+     0.9637833073548235,
+     1.0
+    ],
+    "med_days": 91.75
+   },
+   "to_end": {
+    "k": 100,
+    "ci": [
+     0.9637833073548235,
+     1.0
+    ],
+    "med_days": 91.75
+   }
+  },
+  "phase_r": {
+   "n": 100,
+   "n_pre": 2,
+   "pre_med_days": 129.75,
+   "nine_months": {
+    "k": 98,
+    "ci": [
+     0.9296160675289299,
+     0.9975686631760574
+    ],
+    "med_days": 11.5
+   },
+   "to_end": {
+    "k": 98,
+    "ci": [
+     0.9296160675289299,
+     0.9975686631760574
+    ],
+    "med_days": 11.5
+   }
+  },
+  "phase_c": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 15,
+    "ci": [
+     0.08645438564164859,
+     0.23530750014895488
+    ],
+    "med_days": 254.0
+   },
+   "to_end": {
+    "k": 70,
+    "ci": [
+     0.6001853238201958,
+     0.7875935795104634
+    ],
+    "med_days": 300.5
+   }
+  },
+  "ctm_f": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 90,
+    "ci": [
+     0.8237774022599773,
+     0.9509953107785141
+    ],
+    "med_days": 219.5
+   },
+   "to_end": {
+    "k": 100,
+    "ci": [
+     0.9637833073548235,
+     1.0
+    ],
+    "med_days": 226.25
+   }
+  },
+  "cusum": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 100,
+    "ci": [
+     0.9637833073548235,
+     1.0
+    ],
+    "med_days": 24.25
+   },
+   "to_end": {
+    "k": 100,
+    "ci": [
+     0.9637833073548235,
+     1.0
+    ],
+    "med_days": 24.25
+   }
+  },
+  "phase_omni": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 3,
+    "ci": [
+     0.006229971538306395,
+     0.08517605297428002
+    ],
+    "med_days": 249.25
+   },
+   "to_end": {
+    "k": 14,
+    "ci": [
+     0.07870540492696577,
+     0.22372798137056774
+    ],
+    "med_days": 368.5
+   }
+  }
+ },
+ "stiffening_then_loss": {
+  "phase_d": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   },
+   "to_end": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   }
+  },
+  "phase_r": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   },
+   "to_end": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   }
+  },
+  "phase_c": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   },
+   "to_end": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   }
+  },
+  "ctm_f": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   },
+   "to_end": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   }
+  },
+  "cusum": {
+   "n": 100,
+   "n_pre": 0,
+   "pre_med_days": null,
+   "nine_months": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   },
+   "to_end": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   }
+  },
+  "phase_omni": {
+   "n": 100,
+   "n_pre": 100,
+   "pre_med_days": 11.125,
+   "nine_months": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   },
+   "to_end": {
+    "k": 0,
+    "ci": [
+     0.0,
+     0.03621669264517641
+    ],
+    "med_days": null
+   }
+  }
+ }
+}

@@ -1,0 +1,275 @@
+RESPONSE TO THE EDITOR AND REVIEWERS (SECOND REVISION)
+Manuscript ID AISBE-08-2026-0041.R1
+"Physics-informed e-processes for damage detection under a lifetime false-alarm budget in continuously monitored structures"
+
+Dear Dr. Khudhair,
+
+Thank you for the editorial assessment and for the reviewers' recommendations. Each point of your
+letter is answered below, in the order in which it was raised, with the location of the change in
+the revised manuscript. Section, table, figure and proposition numbers refer to the revised
+manuscript. In the highlighted version, text added or changed in this round is set in red; text from
+the previous round remains blue; the clean version carries no colour. Several of your points
+concerned numbers, so we re-derived them from the stored results and, where a number depended on a
+simulation stage, reran that stage with its fixed seeds; what we found is stated under each point.
+
+Summary. All points were addressed by changes to wording, proofs, tables and supplied files. One
+numerical statement was wrong in the manuscript (the observation window of the stiffening-then-
+damage experiment); the others were reporting and labelling errors. No headline result changed. The
+conformal comparators are now described as empirical comparators without a sequential guarantee, as
+you allowed, so no simulation had to be changed for that point.
+
+EDITORIAL POINTS
+
+EDITORIAL POINT 1. CONFORMAL COMPARATORS (SECTION 4.1.3, TABLE 4)
+
+Editor's comment: Repeatedly ranking monitoring scores against the same finite calibration set does
+not, under exchangeability or i.i.d. sampling alone, give independent uniform p-values; the argument
+does not establish a test-martingale guarantee for the product of the power betting functions.
+Provide the p-value construction and a valid justification, or describe CTM and CTM-F as empirical
+comparators; revise Table 4 and the interpretation of their false-alarm behaviour.
+
+Response. We agree, and we have chosen the second option. The implemented construction is now stated
+exactly: with calibration scores c_1,...,c_n fixed at the end of commissioning, the smoothed
+conformal p-value is p_t = (#{c_i > X_t} + U_t (1 + #{c_i = X_t})) / (n+1) with independent uniform
+U_t, floored at 1e-6; the betting functions eps*p^(eps-1) are multiplied over epochs for twelve
+equally spaced eps in [0.05, 0.95], averaged with equal weights, and the alarm is at 1/alpha. This
+is what the code (monitors.py) computes. We then state why no guarantee is claimed. Conditional on
+the realised calibration set, the distribution of p_t is the empirical distribution function of that
+set evaluated at the new score, which is in general not uniform (deviations of order n^(-1/2)).
+Marginally over the calibration set, p-values of different epochs share it and are dependent. The
+conditional expectation of the betting function need not be one, so the product is not a martingale
+and Ville's inequality does not apply. A construction with a sequential guarantee would rank each
+score among all earlier scores, calibration scores included (online conformal p-values), and tests
+exchangeability of the whole sequence, a different null; we did not implement it. The earlier
+sentence that the p-values 'are uniform and independent, and the product is a test martingale' if
+the scores are exchangeable with a fixed calibration set has been removed, and the description of
+CTM and CTM-F as 'anytime-valid comparators' has been removed everywhere. In Table 4 they now form a
+separate group, 'conformal comparators: empirical, no established anytime-valid guarantee', and the
+caption says why. The text of Section 4.2.2 no longer calls the excess of CTM (0.033 and 0.030) a
+failure of a guarantee, and no longer reads the zero of CTM-F as certification; the comparison with
+PHASE now rests on the fact that PHASE has a proved conditional guarantee and the conformal
+comparators do not. The discussion of the power frontier in Section 4.2.3 was adjusted in the same
+way. The simulation results for CTM and CTM-F are unchanged, because the implementation is
+unchanged.
+
+Changes: Section 4.1.3 (rewritten, the formula for p_t and the explanation are new); Table 4 (new
+group and caption); Section 4.2.2 (paragraph on the conformal comparators); Section 4.2.3 (frontier
+paragraph); Section 2.3 and Table 1 (the guarantee is attributed to the online construction only);
+Contribution 5 in Section 1; Appendix A and Appendix B (formula and status of CTM and CTM-F).
+
+EDITORIAL POINT 2. PROPOSITIONS 2, 4(III) AND 5 (APPENDIX C)
+
+Editor's comment: Proposition 2: the lower bound is stated for the raw maximum but the algorithm
+uses its positive part (counterexample: negative real ray, V = {-1}, r = 1); state the result for
+the positive part, treat the zero-projection case separately. Proposition 4(iii): state 0 < epsilon
+< alpha. Proposition 5: make the auxiliary hitting time consistent with the case in which it equals
+the change time.
+
+Response. Proposition 2. We checked your counterexample: the cone is {x <= 0}, V = {-1}, covering
+radius zero, r = 1 gives a raw maximum of -1 and a projection of norm 0, so the lower bound as
+stated was false for the raw maximum. The proposition is now stated for (max_k <v_k, r>)^+, which is
+what the score (eq. 9) uses; the upper bound holds for both. The proof treats p = ||Pi_C(r)|| = 0
+separately (the bound is then trivial because the positive part is non-negative) and, for p > 0,
+uses the unit vector Pi_C(r)/p, which also removes the earlier tacit assumption that the supremum is
+attained on the unit sphere. The counterexample is recorded in the proof. Proposition 4(iii). The
+condition is now 0 < epsilon < alpha, so that the threshold 1/(alpha - epsilon) is finite and
+exceeds 1/alpha. The experiments use epsilon = alpha/2, which satisfies it. Proposition 5. The
+auxiliary hitting time is now defined as T = inf{t >= t*: L_t >= b}, so that T = t* when the
+component already satisfies L_{t*} >= b; the proof treats that case first (the right side of the
+bound is non-negative, so it holds trivially) and otherwise has T > t*, with the log-wealth below b
+before T. The first-passage argument is otherwise unchanged.
+
+Changes: Proposition 2 and its proof in Appendix C; Proposition 4(iii) and its proof; Proposition 5
+proof.
+
+EDITORIAL POINT 3. CONSISTENCY OF THE QUALIFICATIONS ON THE FALSE-ALARM GUARANTEE
+
+Editor's comment: The abstract makes coverage of the operating environment sufficient for the
+lifetime bound; the last sentence of Section 3.3 implies that predictable fitting alone preserves
+validity; the statement in Section 3.5 about acting before threshold crossing should agree with
+Section 6.1. Retain these distinctions when explaining the PHASE acronym and summarising
+performance.
+
+Response. Abstract. The practical-implications field now states the necessary conditions: the bound
+holds only if the expected score of the undamaged structure stays below the design constant plus the
+calibrated allowance, which requires commissioning that represents the whole operating environment;
+coverage is necessary but does not by itself establish the bound or its calibration; missed
+detections are not controlled. Section 3.3. The last sentence now says that predictability of the
+plug-in is necessary but not sufficient: validity also needs the conditional-mean bound for the
+score formed from the residual, which a predictable fit does not deliver and which Section 3.6
+prices. Section 3.5. The sentence now says that the bound holds whenever and however often the
+operator inspects the process, concerns the alarm at level 1/alpha, and that an action at a lower
+evidence level w is protected only at level 1/w; it points to Section 6.1, which already said so.
+PHASE acronym and summaries. Where the acronym is introduced (abstract and Section 1) the text now
+says that anytime-validity is a conditional property of the e-process and that, under the empirical
+calibration of the allowance, the observed false-alarm control is an empirical finding and not an
+instance of the theorem; the same reservation is given for the title's 'lifetime false-alarm
+budget'. This also answers Reviewer 1's second proof-stage item. We also added the qualification
+that coverage is necessary but not sufficient in Section 6.1 (third implication) and in the
+conclusions.
+
+Changes: Abstract (Design/methodology/approach and Practical implications); Section 1 (paragraph
+introducing PHASE); Section 3.3 (final sentences); Section 3.5 (second feature); Section 6.1;
+Section 6.2 ('Are the delays acceptable?'); Section 6.5.
+
+EDITORIAL POINT 4A. TABLE 3, ERROR MEASURE
+
+Editor's comment: Table 3 is described as the maximum relative error across modes, but an
+independent calculation reproduces the values as maximum absolute approximation error divided by
+maximum absolute exact shift. For 10% loss at storey 3 these are 8.23% (the table) and 13.87%
+(maximum of the modal relative errors). Define the measure and align caption and interpretation.
+
+Response. You are right. We recomputed from the stored exact and first-order shifts: the table
+reported the normalised error max_i |f_i - e_i| / max_i |e_i| (8.23% for 10% loss at storey 3) and
+the caption called it a relative error; the maximum of the six modal relative errors is 13.87%
+(sixth mode). Both measures are now defined in the text and the caption. Table 3 has two panels: A,
+the normalised error (values unchanged: 1.9, 1.7, 1.8% at 2% loss; 4.6, 4.2, 4.6% at 5%; 9.3, 8.2,
+9.2% at 10%) and B, the maximum modal relative error (1.9, 2.8, 2.4%; 4.6, 7.0, 5.8%; 9.3, 13.9,
+11.6%). The interpretation was changed to match. The statement that the first-order model is
+'accurate' with errors 'degrading gracefully and conservatively' has been replaced: the model is
+adequate at 2-5% loss (individual modal errors of a few per cent) but its error at 10% loss is not
+negligible (up to 13.9% of an individual modal shift); the first-order model understates the
+frequency drop in most mode-storey pairs; the word 'conservatively' was removed because we cannot
+show that the direction of the error is conservative for detection. The code now stores both
+measures (stage.py) and table 3 is generated by make_tables.py.
+
+Changes: Section 4.2 (subsection 'Validity of the first-order physics'): text and Table 3.
+
+EDITORIAL POINT 4B. OBSERVATION WINDOWS IN SECTION 4.2.9 AND TABLE 12
+
+Editor's comment: Detection is stated to be counted within nine months, while Table 12 gives
+control-case median delays of 300 days (PHASE-C) and 368 days (PHASE-Omega). Reconcile the windows,
+detection counts and delay summaries and make differences between control and stiffening cases
+explicit.
+
+Response. The inconsistency was real. We reran the stage with its fixed seeds (it reproduces every
+entry of the old table) and recomputed detection in both windows. The experiment uses four-year
+records (5,840 epochs) and the loss occurs at epoch 2,545, so 3,295 epochs (824 days, about 27
+months) remain after the loss; the original counts were over that whole remaining record and not
+over nine months as the text said. That is why medians of 300 and 368 days are possible. The nine-
+month window of the other experiments is 1,095 epochs. Table 12 now reports both windows for the
+control (loss alone). Within nine months: PHASE 100/100 (median 92 days), PHASE-R 98/100 (12),
+PHASE-C 15/100 (254), CTM-F 90/100 (220), CUSUM 100/100 (24), PHASE-Omega 3/100 (249). Over the
+whole remaining record: PHASE 100/100 (92), PHASE-R 98/100 (12), PHASE-C 70/100 (300), CTM-F 100/100
+(226), CUSUM 100/100 (24), PHASE-Omega 14/100 (368). For stiffening followed by loss the result does
+not depend on the window: no monitor detected the loss, and only PHASE-Omega alarmed, on the
+stiffening itself, in 100/100 records at a median of 11 days (not counted as a detection of the
+loss, by the definition in Section 4.1.4). The text states the window, explains why the medians
+exceed nine months, and states that the control and the stiffening cases differ only in what
+precedes the loss. The definition of detection in Section 4.1.4 notes this experiment as the
+exception to the nine-month window, and Section 6.2 now says 'within nine months or over the 27
+months that remained'. The new script stiffdam_windows.py produces the two-window counts from the
+stage output; make_tables.py generates the table.
+
+Changes: Section 4.2.9 and Table 12; Section 4.1.4 (detection definition); Section 6.2 (long-lived
+assets); code/stiffdam_windows.py, code/stiffdam_windows.json.
+
+EDITORIAL POINT 4C. ZERO-EVENT CONFIDENCE LIMITS IN TABLE 9
+
+Editor's comment: The two-sided exact 95% upper limit for 0/100 is about 0.0362, not 0.03.
+
+Response. Confirmed. The stored limit (summary.json) was 0.0362 and the caption of Table 8 already
+said 0.036; the table generator had truncated limits to two decimals instead of rounding them. Table
+9 now shows [0.00, 0.04] for every 0/100 entry. We checked every k/n [lo, hi] interval in the
+manuscript against an exact (Clopper-Pearson) computation and corrected the other truncated limits:
+Table 5 (150/150: lower limit 0.9757, now 0.98, was 0.97; the same in the text of Section 4.2.3) and
+Table 9 (66/100: lower limit 0.56, was 0.55; 99/100: 0.95, was 0.94; 92/100: 0.85, was 0.84). The
+generator was corrected (make_tables.py) and regenerates the tables identically to the manuscript.
+All other intervals were already correctly rounded.
+
+Changes: Table 9; Table 5 and Section 4.2.3 (text); code/make_tables.py.
+
+EDITORIAL POINT 5. FIELD RESULTS
+
+Editor's comment: Restrict the Z24 statement that a frequency rise cannot have been caused by damage
+to the assumed stiffness-loss mechanism at fixed mass; keep the KW51 pre-works condition described
+as assumed, and the configuration counts descriptive, not independent estimates of false-alarm
+probability.
+
+Response. Z24. The sentence in the directional-behaviour paragraph is restricted: under the model on
+which the cone rests (stiffness loss at fixed mass) a frequency rise cannot have been caused by
+damage; it does not follow that no damage of any kind occurred, since mass loss, crack closure or
+boundary stiffening can raise frequencies and lie outside the cone, as Section 5.2 already
+recognised. KW51. The pre-works condition is described as an assumed healthy reference throughout;
+an alarm before the inferred works period is called a 'false alarm' only relative to that reference
+(and would not be false if the structure was not healthy). The text, the Table 17 caption, the
+abstract, Table 14, the real-data summary, the limitations and the conclusions use this wording. The
+counts over the 15 configurations are stated to be descriptive: the configurations share one bridge
+and one pre-works record, overlap, and were selected exploratorily, so they are not independent
+estimates of a false-alarm probability.
+
+Changes: Section 5.3 (directional behaviour); Section 5.4 (setup, results, 'What this shows'; Table
+17 caption); Table 14; Section 5.5; Section 6.4; Section 6.5; Abstract.
+
+EDITORIAL POINT 6. IMPLEMENTATION FILES AND REPRODUCTION INSTRUCTIONS
+
+Editor's comment: Make the files cited in Appendix B and the response accessible through submission
+files or a documented repository.
+
+Response. The code is supplied in two ways. (i) As Supplementary file S1 (phase_code.zip) with this
+submission: the code directory, the extracted Z24 modal features, the KW51 results file, the vector
+source of Figure 10 and README_reproduction.md, which lists every stage and command. (ii) In a
+documented repository, https://github.com/vinhqdang/Physics-informed-e-processes-for-anytime-valid-
+damage-detection-in-continuously-monitored-structures (branch main), which holds the manuscript
+sources, figures, code, the previous and present responses, and the same README. Appendix B now has
+an 'Availability' paragraph naming the archive and stating that the repository address is withheld
+from the anonymised manuscript only and will be cited in the published version. The raw Z24 records
+(KU Leuven) and the KW51 tracked-mode file (Zenodo 3745914, CC BY-NC-SA 4.0) are not redistributed;
+the README gives provenance and the download command. You could not locate these files in the
+submission's file list; the archive and the repository are the correction of that.
+
+Changes: Appendix B ('Availability'); README.md, README_reproduction.md,
+supplementary/phase_code.zip.
+
+EDITORIAL POINT 7. SECTION 6.2, 'ARE THE DELAYS ACCEPTABLE?'
+
+Editor's comment: The paragraph is incomplete and should be restored.
+
+Response. The paragraph was truncated by a typesetting error: the percent signs and a cross-
+reference in it had been escaped, so the LaTeX compiler treated the text after '5' in '5% loss' as a
+comment and dropped the rest. It is restored in full in both the highlighted and clean versions. We
+checked the whole manuscript for the same fault and found no other instance. We also added that the
+reported delays are the price of targeting a 1% lifetime budget that holds only under the conditions
+of Section 3.6.
+
+Changes: Section 6.2, paragraph 'Are the delays acceptable?'.
+
+EDITORIAL POINT 8. TITLE, FIGURE 10 AND PLACEMENT OF THE APPENDICES
+
+Editor's comment: Synchronise the revised title across the manuscript and submission metadata;
+provide a suitable source version of Figure 10 with labels legible at the final size; agree the
+placement of the appendices with the editorial office.
+
+Response. Title. The revised title ('Physics-informed e-processes for damage detection under a
+lifetime false-alarm budget in continuously monitored structures') is the title in the manuscript,
+its PDF metadata, the response letters and the supplied files. The repository name keeps the first-
+submission title and cannot be changed without breaking the address; the README says so.
+SUBMISSION_METADATA.txt gives the title, keywords and file list to be entered in the submission
+system. Because we cannot edit the system's metadata from here, please confirm that the entry shows
+the revised title; we will also check it at proof stage, as Reviewer 1 asked. Figure 10 (KW51). It
+is now supplied as a vector PDF (fig_kw51.pdf, TrueType fonts embedded), 7.0 in (17.8 cm) wide, the
+width of a two-column page, with all text 8 pt or larger at that size (legend entries were 6 pt
+before and now sit outside the plotting area, so no label overlaps data). The script that draws it
+(kw51_figure.py) is supplied; a PNG preview is kept. The other figures are unchanged raster images
+and we can supply vector sources if the production team asks. Appendices. The manuscript places
+Appendices A (notation and acronyms), B (implementation details) and C (proofs) after the reference
+list, at the end of the file. We have not changed the layout. Please tell us whether the journal
+wishes them printed as appendices, moved to the main text (the proofs are referred to throughout),
+or supplied as online supplementary material; we will follow the editorial office's decision.
+
+Changes: Title page and PDF metadata; Figure 10 (figures/fig_kw51.pdf); appendices at the end of the
+manuscript; SUBMISSION_METADATA.txt.
+
+REVIEWERS
+
+Reviewer 1. We thank the reviewer. The three proof-stage items are handled as follows. (1) Title in
+the publisher's metadata: see editorial point 8; we will verify it at proof. (2) Clarification where
+the PHASE acronym is introduced about anytime-validity under the empirical calibration: added in the
+abstract and in Section 1 (editorial point 3). (3) Figure 10 in vector format with legible text at
+two-column size: supplied (editorial point 8).
+
+Reviewer 2. We thank the reviewer; no further comments were raised.
+
+We hope the revised manuscript can now be accepted. We are grateful to the editor and the reviewers
+for their care, and in particular for the checks of the proofs and numbers that led to these
+corrections.
