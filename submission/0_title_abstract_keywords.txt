@@ -1,0 +1,19 @@
+TITLE
+Physics-informed e-processes for damage detection under a lifetime false-alarm budget in continuously monitored structures
+
+ABSTRACT
+
+Purpose - Damage thresholds for continuously monitored structures are usually set as if one test were run, so the chance of a false alarm over a monitoring life can approach one. This paper develops a rule with a stated false-alarm budget for monitoring of unspecified length and tests how well the budget survives finite commissioning.
+
+Design/methodology/approach - PHASE (Physics-informed Hedged Anytime-valid Sequential Evidence; "anytime-valid" is a conditional property of the e-process, not a guarantee for the commissioning-calibrated implementation) predicts temperature and load effects on natural frequencies, scores the remainder only in directions stiffness loss can produce (the damage cone), and accumulates it in a betting e-process. We use 4,200 simulated frame records, sixteen comparators and variants, and Z24 bridge data.
+
+Findings - The budget is a conditional theorem; its commissioning-based calibration is only empirical, and the provable variant has little power. With one year of commissioning, PHASE raised no false alarm in 300 undamaged records at one year or in 300 at three (upper 95% limit 1.2%). A 5% loss at storey 3 was detected in all 150 records (median 59 days), a 2% loss in 34%, a 5% loss after two healthy years in 66%, and none after a benign stiffening. Commissioning of 30-60 days destroyed false-alarm control. On two real bridges a reduced version (no structural model) stayed silent when Z24 recovered stiffness, but on KW51, with real covariates, it raised alarms before the inferred retrofit period (relative to an assumed healthy reference) in most configurations with hourly epochs and in 0 to 9 of 15 with daily epochs, depending on the surrogate; these descriptive counts are not independent estimates of a false-alarm probability.
+
+Research limitations/implications - Only simulation validates the full framework; the reduced version did not reliably stay silent on real data in a period only assumed to be healthy (KW51); nuisance-subspace loss patterns are indistinguishable from temperature, and storey 1 was not localised.
+
+Practical implications - The bound that each structure has probability at most alpha of ever raising a first false alarm holds only if the expected score of the undamaged structure stays below the design constant plus the calibrated allowance, which requires commissioning that represents the whole operating environment; coverage of that environment is necessary but does not by itself establish the bound or its calibration. Missed detections are not controlled.
+
+Originality/value - First use, to our knowledge, of betting e-processes with physics-derived damage directions in vibration-based monitoring.
+
+KEYWORDS
+Structural health monitoring; Anytime-valid inference; E-process; Physics-informed machine learning; Digital twin; Damage detection; False alarms; Infrastructure resilience; Environmental and operational variability; Predictive maintenance
